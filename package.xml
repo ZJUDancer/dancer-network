@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package>
+  <name>dnetwork</name>
+  <version>0.0.0</version>
+  <description>The dnetwork package</description>
+  <maintainer email="mwx@todo.todo">mwx</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <buildtool_depend>dtransmit</buildtool_depend>
+  <run_depend>dtransmit</run_depend>
+
+  <buildtool_depend>roscpp</buildtool_depend>
+  <run_depend>roscpp</run_depend>
+
+  <buildtool_depend>dprocess</buildtool_depend>
+  <run_depend>dprocess</run_depend>
+
+  <buildtool_depend>dmotion</buildtool_depend>
+  <run_depend>dmotion</run_depend>
+
+  <buildtool_depend>dbehavior</buildtool_depend>
+  <run_depend>dbehavior</run_depend>
+
+  <buildtool_depend>dvision</buildtool_depend>
+  <run_depend>dvision</run_depend>
+
+</package>
