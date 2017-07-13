@@ -43,6 +43,7 @@ include_directories(
 add_executable(${PROJECT_NAME}_node 
   src/main.cpp
   src/team.cpp
+  src/gamecontroller.cpp
 
   )
 
