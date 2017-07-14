@@ -85,7 +85,6 @@ void GameController::tick() {
 
 void GameController::ParseData(RoboCupGameControlData &gameData) {
     if (!IsValidData(gameData)) {
-        ROS_INFO("Data invalid");
         return;
     }
 
@@ -117,23 +116,23 @@ bool GameController::IsThisGame(RoboCupGameControlData &gameData) {
 
 bool GameController::IsValidData(RoboCupGameControlData &gameData) {
     if (!CheckHeader(gameData.header)) {
-        ROS_ERROR("Header invalid, recv: %s need: %s", gameData.header, GAMECONTROLLER_STRUCT_HEADER);
+        ROS_WARN("Header invalid, recv: %s need: %s", gameData.header, GAMECONTROLLER_STRUCT_HEADER);
         return false;
     }
 
     if (gameData.version != GAMECONTROLLER_STRUCT_VERSION) {
-        ROS_ERROR("Version invalid, recv: %d, need: %d", gameData.version, GAMECONTROLLER_STRUCT_VERSION);
+        ROS_WARN("Version invalid, recv: %d, need: %d", gameData.version, GAMECONTROLLER_STRUCT_VERSION);
         return false;
     }
 
     if (!IsThisGame(gameData)) {
-        ROS_ERROR("Data not for this game!");
+        ROS_WARN("Data not for this game!");
         return false;
     }
 
     // Data is valid OvO
     last_valid_packet_timestamp_ = ros::Time::now();
-    ROS_INFO("Data valid OvO");
+    ROS_DEBUG("Data valid OvO");
     return true;
 }
 
