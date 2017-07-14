@@ -9,7 +9,8 @@ Team::Team(ros::NodeHandle *n)
 
 }
 
-Team::~Team() {
+Team::~Team()
+{
 
 }
 

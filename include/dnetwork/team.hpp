@@ -1,9 +1,10 @@
 #pragma once
 #include <dtransmit/dtransmit.hpp>
 #include <dprocess/dprocess.hpp>
-#include <dmotion/MotionInfo.h>
-#include <dbehavior/BehaviorInfo.h>
-#include <dvision/VisionInfo.h>
+
+#include <dmsgs/MotionInfo.h>
+#include <dmsgs/BehaviorInfo.h>
+#include <dmsgs/VisionInfo.h>
 
 namespace dnetwork {
 
@@ -28,9 +29,9 @@ private:
     // UDP recv&send TeamInfo
     dtransmit::DTransmit* team_transmit_;
 
-    void MotionCallback(const dmotion::MotionInfo::ConstPtr& msg);
-    void BehaviorCallback(const dbehavior::BehaviorInfo::ConstPtr& msg);
-    void VisionCallback(const dvision::VisionInfo::ConstPtr& msg);
+    void MotionCallback(const dmsgs::MotionInfo::ConstPtr& msg);
+    void BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr& msg);
+    void VisionCallback(const dmsgs::VisionInfo::ConstPtr& msg);
 };
 
 } // namespace dnetwork

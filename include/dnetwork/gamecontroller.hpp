@@ -5,7 +5,7 @@
 #include <dprocess/dprocess.hpp>
 #include <dtransmit/dtransmit.hpp>
 #include "dnetwork/RoboCup/RoboCupGameControlData.h"
-#include "dnetwork/GCInfo.h"
+#include "dmsgs/GCInfo.h"
 
 namespace dnetwork {
 class GameController : public dprocess::DProcess<GameController> {
@@ -32,7 +32,7 @@ private:
     dtransmit::DTransmit* transmitter_;
     RoboCupGameControlData data_;
     ros::Publisher pub_;
-    GCInfo info_;
+    dmsgs::GCInfo info_;
 
     bool connected_;
     bool penalised_;

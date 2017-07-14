@@ -21,7 +21,7 @@ GameController::GameController(ros::NodeHandle *nh)
     ret_.player = (uint8_t)playerNumber_;
     ret_.message = GAMECONTROLLER_RETURN_MSG_ALIVE;
 
-    pub_ = nh_->advertise<GCInfo>("/humanoid/GCInfo", 1);
+    pub_ = nh_->advertise<dmsgs::GCInfo>("/humanoid/GCInfo", 1);
 
     transmitter_ = new dtransmit::DTransmit("255.255.255.255");
     transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void *buffer, size_t size) {
@@ -47,13 +47,12 @@ void GameController::tick() {
     if(data_.teams[TEAM_CYAN].teamNumber == teamNumber_) {
         ourTeam = &(data_.teams[TEAM_CYAN]);
         enemyTeam = &(data_.teams[TEAM_MAGENTA]);
-        teamCyan_ = true;
     } else {
         enemyTeam = &(data_.teams[TEAM_CYAN]);
         ourTeam = &(data_.teams[TEAM_MAGENTA]);
-        teamCyan_ = false;
     }
 
+    teamCyan_ = (ourTeam->teamColour == TEAM_CYAN);
     int ourScore = ourTeam->score;
     int enemyScore = enemyTeam->score;
 
