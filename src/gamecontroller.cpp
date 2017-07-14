@@ -8,7 +8,7 @@ GameController::GameController(ros::NodeHandle *nh)
     if (!nh_->getParam("/ZJUDancer/GameControllerAddress", gameControllerAddress_))
         throw std::runtime_error("Can't get gamecontroller address!");
 
-    if (!nh_->getParam("/ZJUDancer/RobotId", playerNumber_))
+    if (!nh_->getParam("RobotId", playerNumber_))
         throw std::runtime_error("Can't get player number!");
 
     if (!nh->getParam("/ZJUDancer/TeamNumber", teamNumber_))
