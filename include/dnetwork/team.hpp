@@ -1,33 +1,41 @@
 #pragma once
-#include <dtransmit/dtransmit.hpp>
+#include "dconfig/dconstant.hpp"
 #include <dprocess/dprocess.hpp>
+#include <dtransmit/dtransmit.hpp>
 
-#include <dmsgs/MotionInfo.h>
 #include <dmsgs/BehaviorInfo.h>
+#include <dmsgs/MotionInfo.h>
+#include <dmsgs/TeamInfo.h>
 #include <dmsgs/VisionInfo.h>
 
-namespace dnetwork {
+#include <string>
 
-class Team : public dprocess::DProcess<Team> {
-public:
-    explicit Team(ros::NodeHandle* n);
+namespace dnetwork {
+// FIXME(corenel) get from GC?
+static const int NUM_ROBOT = 6;
+
+class Team : public dprocess::DProcess<Team>
+{
+  public:
+    explicit Team(ros::NodeHandle* nh);
     ~Team();
     void tick() override;
 
-private:
+  private:
     ros::NodeHandle* nh_;
-    ros::Subscriber motion_pub_;
-    ros::Subscriber behavior_pub_;
-    ros::Subscriber vision_pub_;
-
-    // Publish parsed GCInfo
+    ros::Subscriber motion_sub_;
+    ros::Subscriber behavior_sub_;
+    ros::Subscriber vision_sub_;
     ros::Publisher pub_;
 
-    // UDP recv GC
-    dtransmit::DTransmit* gc_transmit_;
-
     // UDP recv&send TeamInfo
-    dtransmit::DTransmit* team_transmit_;
+    dtransmit::DTransmit* transmitter_;
+    dmsgs::TeamInfo info_;
+
+    int player_numebr_;
+    int team_number_;
+    bool team_cyan_;
+    std::string udp_broadcast_address;
 
     void MotionCallback(const dmsgs::MotionInfo::ConstPtr& msg);
     void BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr& msg);
