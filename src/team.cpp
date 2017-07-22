@@ -24,7 +24,7 @@ Team::Team(ros::NodeHandle* nh)
     motion_sub_ = nh_->subscribe("/dmotion_" + std::to_string(player_number_) + "/MotionInfo", 1, &Team::MotionCallback, this);
     vision_sub_ = nh_->subscribe("/dvision" + std::to_string(player_number_) + "/VisionInfo", 1, &Team::VisionCallback, this);
     behavior_sub_ = nh_->subscribe("/dbehavior_" + std::to_string(player_number_) + "/BehaviorInfo", 1, &Team::BehaviorCallback, this);
-    pub_ = nh_->advertise<dmsgs::TeamInfo>("/humanoid/TeamInfo", 1);
+    pub_ = nh_->advertise<dmsgs::TeamInfo>("/dnetwork_" + std::to_string(player_number_) + "/TeamInfo", 1);
 
     // dtranmitter
     // TODO(corenel) unique port for each robot? or unified one?
