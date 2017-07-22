@@ -30,11 +30,13 @@ Team::Team(ros::NodeHandle* nh)
     // TODO(corenel) unique port for each robot? or unified one?
     transmitter_ = new dtransmit::DTransmit(udp_broadcast_address);
     transmitter_->addRawRecv(dconstant::network::TeamInfoBroadcastAddress, [this](void* buffer, std::size_t size) {
-        std::unique_lock<std::mutex> lock(data_lock_);
-        dmsgs::TeamInfo team_info = *(dmsgs::TeamInfo*)buffer;
-        if (team_info.player_number != player_number_) {
-            // ROS_INFO("I heared message from robot %d", team_info.player_number);
-            pub_.publish(team_info);
+        if (size == sizeof(dmsgs::TeamInfo)) {
+            std::unique_lock<std::mutex> lock(data_lock_);
+            dmsgs::TeamInfo team_info = *(dmsgs::TeamInfo*)buffer;
+            if (team_info.player_number != player_number_) {
+                // ROS_INFO("I heared message from robot %d", team_info.player_number);
+                pub_.publish(team_info);
+            }
         }
     });
     transmitter_->startService();
