@@ -8,6 +8,8 @@
 #include <dmsgs/TeamInfo.h>
 #include <dmsgs/VisionInfo.h>
 
+#include <mutex>
+#include <ros/ros.h>
 #include <string>
 
 namespace dnetwork {
@@ -30,12 +32,17 @@ class Team : public dprocess::DProcess<Team>
 
     // UDP recv&send TeamInfo
     dtransmit::DTransmit* transmitter_;
+    std::string udp_broadcast_address;
     dmsgs::TeamInfo info_;
 
-    int player_numebr_;
+    int player_number_;
     int team_number_;
     bool team_cyan_;
-    std::string udp_broadcast_address;
+
+    std::mutex data_lock_;
+    bool motion_info_ready;
+    bool vision_info_ready;
+    bool behavior_info_ready;
 
     void MotionCallback(const dmsgs::MotionInfo::ConstPtr& msg);
     void BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr& msg);

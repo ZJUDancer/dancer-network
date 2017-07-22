@@ -3,8 +3,11 @@
 namespace dnetwork {
 using namespace std;
 static const int FREQ = 2;
-GameController::GameController(ros::NodeHandle *nh)
-    : DProcess(FREQ, false), nh_(nh), last_valid_packet_timestamp_(0) {
+GameController::GameController(ros::NodeHandle* nh)
+  : DProcess(FREQ, false)
+  , nh_(nh)
+  , last_valid_packet_timestamp_(0)
+{
     if (!nh_->getParam("/ZJUDancer/GameControllerAddress", gameControllerAddress_))
         throw std::runtime_error("Can't get gamecontroller address!");
 
@@ -24,27 +27,30 @@ GameController::GameController(ros::NodeHandle *nh)
     pub_ = nh_->advertise<dmsgs::GCInfo>("/humanoid/GCInfo", 1);
 
     transmitter_ = new dtransmit::DTransmit("255.255.255.255");
-    transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void *buffer, size_t size) {
+    transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void* buffer, size_t size) {
         if (size == sizeof(RoboCupGameControlData)) {
             unique_lock<mutex> lock(dataLock_);
-            ParseData(*(RoboCupGameControlData *) buffer);
+            ParseData(*(RoboCupGameControlData*)buffer);
         }
     });
 
     transmitter_->startService();
 }
 
-GameController::~GameController() {
+GameController::~GameController()
+{
 }
 
-void GameController::tick() {
+void
+GameController::tick()
+{
     unique_lock<mutex> lock(dataLock_);
     // manipulate data
     auto elapsed = (ros::Time::now() - last_valid_packet_timestamp_).toSec();
     connected_ = elapsed < 3;
 
-    TeamInfo* ourTeam, *enemyTeam;
-    if(data_.teams[TEAM_CYAN].teamNumber == teamNumber_) {
+    TeamInfo *ourTeam, *enemyTeam;
+    if (data_.teams[TEAM_CYAN].teamNumber == teamNumber_) {
         ourTeam = &(data_.teams[TEAM_CYAN]);
         enemyTeam = &(data_.teams[TEAM_MAGENTA]);
     } else {
@@ -57,8 +63,7 @@ void GameController::tick() {
     int enemyScore = enemyTeam->score;
 
     bool kickoff = false;
-    if(((data_.kickOffTeam == TEAM_CYAN) && teamCyan_) ||
-        ((data_.kickOffTeam == TEAM_MAGENTA) && !teamCyan_)) {
+    if (((data_.kickOffTeam == TEAM_CYAN) && teamCyan_) || ((data_.kickOffTeam == TEAM_MAGENTA) && !teamCyan_)) {
         kickoff = true;
     }
 
@@ -73,7 +78,7 @@ void GameController::tick() {
     info_.kickoff = kickoff;
     info_.secsRemaining = data_.secsRemaining < 10000 ? data_.secsRemaining : 0;
     info_.secondaryTime = data_.secondaryTime < 10000 ? data_.secondaryTime : 0;
-    info_.secsTillUnpenalised = ourTeam->players[playerNumber_ -1].secsTillUnpenalised;
+    info_.secsTillUnpenalised = ourTeam->players[playerNumber_ - 1].secsTillUnpenalised;
     info_.ourScore = ourScore;
     info_.enemyScore = enemyScore;
     info_.teamCyan = teamCyan_;
@@ -83,7 +88,9 @@ void GameController::tick() {
     transmitter_->sendRaw(GAMECONTROLLER_RETURN_PORT, (void*)&ret_, sizeof(ret_));
 }
 
-void GameController::ParseData(RoboCupGameControlData &gameData) {
+void
+GameController::ParseData(RoboCupGameControlData& gameData)
+{
     if (!IsValidData(gameData)) {
         return;
     }
@@ -93,28 +100,34 @@ void GameController::ParseData(RoboCupGameControlData &gameData) {
 
     if (!GameDataEqual(gameData, data_))
         memcpy(&data_, &gameData, sizeof(RoboCupGameControlData));
-
 }
 
-bool GameController::GameDataEqual(RoboCupGameControlData &gameData, RoboCupGameControlData &previous) {
-    return !memcmp((void *) &gameData, (void *) &previous, sizeof(RoboCupGameControlData));
+bool
+GameController::GameDataEqual(RoboCupGameControlData& gameData, RoboCupGameControlData& previous)
+{
+    return !memcmp((void*)&gameData, (void*)&previous, sizeof(RoboCupGameControlData));
 }
 
-bool GameController::CheckHeader(char *header) {
+bool
+GameController::CheckHeader(char* header)
+{
     for (int i = 0; i < 4; ++i) {
-        if (header[i] != GAMECONTROLLER_STRUCT_HEADER[i]){
+        if (header[i] != GAMECONTROLLER_STRUCT_HEADER[i]) {
             return false;
         }
     }
     return true;
 }
 
-bool GameController::IsThisGame(RoboCupGameControlData &gameData) {
-    return !(gameData.teams[TEAM_CYAN].teamNumber != teamNumber_ &&
-        gameData.teams[TEAM_MAGENTA].teamNumber != teamNumber_);
+bool
+GameController::IsThisGame(RoboCupGameControlData& gameData)
+{
+    return !(gameData.teams[TEAM_CYAN].teamNumber != teamNumber_ && gameData.teams[TEAM_MAGENTA].teamNumber != teamNumber_);
 }
 
-bool GameController::IsValidData(RoboCupGameControlData &gameData) {
+bool
+GameController::IsValidData(RoboCupGameControlData& gameData)
+{
     if (!CheckHeader(gameData.header)) {
         ROS_WARN("Header invalid, recv: %s need: %s", gameData.header, GAMECONTROLLER_STRUCT_HEADER);
         return false;
@@ -136,14 +149,15 @@ bool GameController::IsValidData(RoboCupGameControlData &gameData) {
     return true;
 }
 
-void GameController::RawSwapTeams(RoboCupGameControlData &gameData) {
-//    auto teamSize = sizeof(TeamInfo);
-//    TeamInfo* cyanTeam = &(gameData.teams[TEAM_CYAN]);
-//    TeamInfo* magentaTeam = &(gameData.teams[TEAM_MAGENTA]);
-//
-//    TeamInfo tempTeam;
-//    memcpy(&tempTeam, cyanTeam, teamSize);
+void
+GameController::RawSwapTeams(RoboCupGameControlData& gameData)
+{
+    //    auto teamSize = sizeof(TeamInfo);
+    //    TeamInfo* cyanTeam = &(gameData.teams[TEAM_CYAN]);
+    //    TeamInfo* magentaTeam = &(gameData.teams[TEAM_MAGENTA]);
+    //
+    //    TeamInfo tempTeam;
+    //    memcpy(&tempTeam, cyanTeam, teamSize);
     std::swap(gameData.teams[TEAM_CYAN], gameData.teams[TEAM_MAGENTA]);
 }
-
 }
