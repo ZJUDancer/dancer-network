@@ -24,7 +24,7 @@ GameController::GameController(ros::NodeHandle* nh)
     ret_.player = (uint8_t)playerNumber_;
     ret_.message = GAMECONTROLLER_RETURN_MSG_ALIVE;
 
-    pub_ = nh_->advertise<dmsgs::GCInfo>("/humanoid/GCInfo", 1);
+    pub_ = nh_->advertise<dmsgs::GCInfo>("/dnetwork_" + std::to_string(playerNumber_) + "/GCInfo", 1);
 
     transmitter_ = new dtransmit::DTransmit("255.255.255.255");
     transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void* buffer, size_t size) {

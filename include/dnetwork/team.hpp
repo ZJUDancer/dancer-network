@@ -7,6 +7,7 @@
 #include <dmsgs/MotionInfo.h>
 #include <dmsgs/TeamInfo.h>
 #include <dmsgs/VisionInfo.h>
+#include <dmsgs/GCInfo.h>
 
 #include <mutex>
 #include <ros/ros.h>
@@ -28,6 +29,8 @@ class Team : public dprocess::DProcess<Team>
     ros::Subscriber motion_sub_;
     ros::Subscriber behavior_sub_;
     ros::Subscriber vision_sub_;
+    ros::Subscriber gc_sub_;
+
     ros::Publisher pub_;
 
     // UDP recv&send TeamInfo
@@ -39,14 +42,18 @@ class Team : public dprocess::DProcess<Team>
     int team_number_;
     bool team_cyan_;
 
-    std::mutex data_lock_;
-    bool motion_info_ready;
-    bool vision_info_ready;
-    bool behavior_info_ready;
+    bool penalised_ = false;
+    bool unstable_ = true;
+
+    bool visionReady_ = false;
+    bool behaviorReady_ = false;
+    bool motionReady_ = false;
+
 
     void MotionCallback(const dmsgs::MotionInfo::ConstPtr& msg);
     void BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr& msg);
     void VisionCallback(const dmsgs::VisionInfo::ConstPtr& msg);
+    void GCCallback(const dmsgs::GCInfo::ConstPtr& msg);
 };
 
 } // namespace dnetwork
