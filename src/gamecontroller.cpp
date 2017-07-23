@@ -47,7 +47,7 @@ GameController::tick()
     unique_lock<mutex> lock(dataLock_);
     // manipulate data
     auto elapsed = (ros::Time::now() - last_valid_packet_timestamp_).toSec();
-    connected_ = elapsed < 3;
+    connected_ = (elapsed < 3);
 
     TeamInfo *ourTeam, *enemyTeam;
     if (data_.teams[TEAM_CYAN].teamNumber == teamNumber_) {
