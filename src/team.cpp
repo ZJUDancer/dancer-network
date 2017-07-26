@@ -51,7 +51,8 @@ Team::tick() {
     info_.player_number = player_number_;
     info_.incapacitated = false;
 
-    if (unstable_ || penalised_) {
+    if (unstable_) {
+        //std::cout << (int)unstable_ << " " << (int)penalised_ << std::endl;
         info_.incapacitated = true;
     }
 
