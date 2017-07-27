@@ -3,7 +3,7 @@
 
 namespace dnetwork {
 
-static const int NETWORK_FREQ = 5;
+static const int NETWORK_FREQ = 30;
 Team::Team(ros::NodeHandle *nh)
     : DProcess(NETWORK_FREQ, false), nh_(nh) {
     // get params from config server

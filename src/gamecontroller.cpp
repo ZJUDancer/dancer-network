@@ -17,9 +17,6 @@ GameController::GameController(ros::NodeHandle* nh)
     if (!nh->getParam("/ZJUDancer/TeamNumber", teamNumber_))
         throw std::runtime_error("Can't get team number!");
 
-    if (!nh->getParam("/ZJUDancer/TeamCyan", teamCyan_))
-        throw std::runtime_error("Can't decide team color");
-
     ret_.team = (uint8_t)teamNumber_;
     ret_.player = (uint8_t)playerNumber_;
     ret_.message = GAMECONTROLLER_RETURN_MSG_ALIVE;
@@ -58,15 +55,54 @@ GameController::tick()
         ourTeam = &(data_.teams[TEAM_MAGENTA]);
     }
 
-    teamCyan_ = (ourTeam->teamColour == TEAM_CYAN);
+//    std::cout << "secondary state: " << (int)data_.secondaryState << " "
+//              << (int)data_.secondaryStateInfo[0] << " "
+//            << (int)data_.secondaryStateInfo[1] << " "
+//            << (int)data_.secondaryStateInfo[2] << " "
+//            << (int)data_.secondaryStateInfo[3] << std::endl;
+
+    int state2 = data_.secondaryState;
+    int state2_team = (int)data_.secondaryStateInfo[0];
+    bool state2_freeze = ((int)data_.secondaryStateInfo[1] == 1);
+    bool state2_ready = !state2_freeze;
+
+    bool ourDirectFreeKick = false;
+    bool ourIndirectFreeKick = false;
+    bool ourPenaltyKick = false;
+    bool enemyDirectFreeKick = false;
+    bool enemyIndirectFreeKick = false;
+    bool enemyPenaltyKick = false;
+
+
+    if (state2 == STATE2_DIRECT_FREEKICK) {
+        ourDirectFreeKick = (state2_team == teamNumber_);
+        enemyDirectFreeKick = !ourDirectFreeKick;
+    } else if (state2 == STATE2_INDIRECT_FREEKICK) {
+        ourIndirectFreeKick = (state2_team == teamNumber_);
+        enemyIndirectFreeKick = !ourIndirectFreeKick;
+    } else if (state2 == STATE2_PENALTYKICK) {
+        ourPenaltyKick = (state2_team == teamNumber_);
+        enemyPenaltyKick = !ourPenaltyKick;
+    }
+
+//    std::cout << "\n\n\n\n\n\n";
+//    std::cout << "state2: " << state2 << '\n'
+//              << "state2_team: " << state2_team << '\n'
+//              << "state2_ready: " << state2_ready << '\n'
+//              << "state2_freeze: " << state2_freeze << '\n'
+//
+//              << "ourDirectFreeKick: " << (ourDirectFreeKick ? "true" : "false" ) << '\n'
+//              << "ourIndirectFreeKick: " << (ourIndirectFreeKick ? "true" : "false" ) << '\n'
+//              << "ourPenaltyKick: " << (ourPenaltyKick ? "true" : "false" ) << '\n'
+//
+//              << "enemyDirectFreeKick: " << (enemyDirectFreeKick ? "true" : "false" ) << '\n'
+//              << "enemyIndirectFreeKick: " << (enemyIndirectFreeKick ? "true" : "false" ) << '\n'
+//              << "enemyPenaltyKick: " << (enemyPenaltyKick ? "true" : "false" ) << '\n';
+
     int ourScore = ourTeam->score;
     int enemyScore = enemyTeam->score;
 
-    bool kickoff = false;
-    if (((data_.kickOffTeam == TEAM_CYAN) && teamCyan_) || ((data_.kickOffTeam == TEAM_MAGENTA) && !teamCyan_)) {
-        kickoff = true;
-    }
-
+    bool kickoff = (data_.kickOffTeam == teamNumber_);
     auto penalty = ourTeam->players[playerNumber_ - 1].penalty;
     penalised_ = (penalty != PENALTY_NONE);
 
@@ -83,6 +119,16 @@ GameController::tick()
     info_.enemyScore = enemyScore;
     info_.teamCyan = teamCyan_;
     info_.penalised = penalised_;
+
+    info_.ourPenaltyKick = ourPenaltyKick;
+    info_.ourDirectFreeKick = ourDirectFreeKick;
+    info_.ourIndirectFreeKick = ourIndirectFreeKick;
+    info_.enemyPenaltyKick = enemyPenaltyKick;
+    info_.enemyDirectFreeKick = enemyDirectFreeKick;
+    info_.enemyIndirectFreeKick = enemyIndirectFreeKick;
+
+    info_.state2Ready = state2_ready;
+    info_.state2Freeze = state2_freeze;
 
     pub_.publish(info_);
     transmitter_->sendRaw(GAMECONTROLLER_RETURN_PORT, (void*)&ret_, sizeof(ret_));
