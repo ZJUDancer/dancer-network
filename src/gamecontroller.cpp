@@ -1,8 +1,23 @@
+/* Copyright (C) ZJUDancer
+ * 2018 - Yusu Pan <xxdsox@gmail.com>
+ * 2017 - Wenxing Mei <mwx36mwx@gmail.com>
+ */
+
+/**
+ * @file gamecontroller.cpp
+ * @brief
+ * @author Yusu Pan, Wenxing Mei
+ * @version 2018
+ * @date 2018-02-24
+ */
+
 #include "dnetwork/gamecontroller.hpp"
 
 namespace dnetwork {
+
 using namespace std;
 static const int FREQ = 2;
+
 GameController::GameController(ros::NodeHandle* nh)
   : DProcess(FREQ, false)
   , nh_(nh)
@@ -55,11 +70,11 @@ GameController::tick()
         ourTeam = &(data_.teams[TEAM_MAGENTA]);
     }
 
-//    std::cout << "secondary state: " << (int)data_.secondaryState << " "
-//              << (int)data_.secondaryStateInfo[0] << " "
-//            << (int)data_.secondaryStateInfo[1] << " "
-//            << (int)data_.secondaryStateInfo[2] << " "
-//            << (int)data_.secondaryStateInfo[3] << std::endl;
+    // std::cout << "secondary state: " << (int)data_.secondaryState << " "
+    //           << (int)data_.secondaryStateInfo[0] << " "
+    //         << (int)data_.secondaryStateInfo[1] << " "
+    //         << (int)data_.secondaryStateInfo[2] << " "
+    //         << (int)data_.secondaryStateInfo[3] << std::endl;
 
     int state2 = data_.secondaryState;
     int state2_team = (int)data_.secondaryStateInfo[0];
@@ -73,7 +88,6 @@ GameController::tick()
     bool enemyIndirectFreeKick = false;
     bool enemyPenaltyKick = false;
 
-
     if (state2 == STATE2_DIRECT_FREEKICK) {
         ourDirectFreeKick = (state2_team == teamNumber_);
         enemyDirectFreeKick = !ourDirectFreeKick;
@@ -85,19 +99,19 @@ GameController::tick()
         enemyPenaltyKick = !ourPenaltyKick;
     }
 
-//    std::cout << "\n\n\n\n\n\n";
-//    std::cout << "state2: " << state2 << '\n'
-//              << "state2_team: " << state2_team << '\n'
-//              << "state2_ready: " << state2_ready << '\n'
-//              << "state2_freeze: " << state2_freeze << '\n'
-//
-//              << "ourDirectFreeKick: " << (ourDirectFreeKick ? "true" : "false" ) << '\n'
-//              << "ourIndirectFreeKick: " << (ourIndirectFreeKick ? "true" : "false" ) << '\n'
-//              << "ourPenaltyKick: " << (ourPenaltyKick ? "true" : "false" ) << '\n'
-//
-//              << "enemyDirectFreeKick: " << (enemyDirectFreeKick ? "true" : "false" ) << '\n'
-//              << "enemyIndirectFreeKick: " << (enemyIndirectFreeKick ? "true" : "false" ) << '\n'
-//              << "enemyPenaltyKick: " << (enemyPenaltyKick ? "true" : "false" ) << '\n';
+    // std::cout << "\n\n\n\n\n\n";
+    // std::cout << "state2: " << state2 << '\n'
+    //           << "state2_team: " << state2_team << '\n'
+    //           << "state2_ready: " << state2_ready << '\n'
+    //           << "state2_freeze: " << state2_freeze << '\n'
+    //
+    //           << "ourDirectFreeKick: " << (ourDirectFreeKick ? "true" : "false" ) << '\n'
+    //           << "ourIndirectFreeKick: " << (ourIndirectFreeKick ? "true" : "false" ) << '\n'
+    //           << "ourPenaltyKick: " << (ourPenaltyKick ? "true" : "false" ) << '\n'
+    //
+    //           << "enemyDirectFreeKick: " << (enemyDirectFreeKick ? "true" : "false" ) << '\n'
+    //           << "enemyIndirectFreeKick: " << (enemyIndirectFreeKick ? "true" : "false" ) << '\n'
+    //           << "enemyPenaltyKick: " << (enemyPenaltyKick ? "true" : "false" ) << '\n';
 
     int ourScore = ourTeam->score;
     int enemyScore = enemyTeam->score;
