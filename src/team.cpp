@@ -72,6 +72,7 @@ Team::tick()
 
     //TODO add lock for message receiving and sending
     if (motionReady_ && visionReady_ && behaviorReady_) {
+        info_.txp_timestamp = ros::Time::now();
         transmitter_->sendRaw(dconstant::network::TeamInfoBroadcastAddress, (void*)&info_, sizeof(info_));
         motionReady_ = false;
         visionReady_ = false;
