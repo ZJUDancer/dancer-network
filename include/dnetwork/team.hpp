@@ -68,6 +68,10 @@ class Team : public dprocess::DProcess<Team>
     dtransmit::DTransmit* transmitter_;
     //! UDP boardcast address
     std::string udp_broadcast_address;
+    //! Lock for data
+    std::mutex data_lock_;
+    //! Lock for data
+    std::mutex info_lock_;
     //! TeamInfo
     dmsgs::TeamInfo info_;
 

@@ -44,6 +44,7 @@ Team::Team(ros::NodeHandle* nh)
     transmitter_ = new dtransmit::DTransmit("255.255.255.255");
     transmitter_->addRawRecv(dconstant::network::TeamInfoBroadcastAddress, [this](void* buffer, std::size_t size) {
         if (size == sizeof(dmsgs::TeamInfo)) {
+            std::unique_lock<std::mutex> lock(data_lock_);
             dmsgs::TeamInfo team_info = *(dmsgs::TeamInfo*)buffer;
             if (team_info.player_number != player_number_) {
                 team_info.recv_timestamp = ros::Time::now();
@@ -84,6 +85,7 @@ Team::tick()
 void
 Team::MotionCallback(const dmsgs::MotionInfo::ConstPtr& msg)
 {
+    std::lock_guard<std::mutex> lock(info_lock_);
     dmsgs::MotionInfo motion_info = *msg;
     unstable_ = !motion_info.stable;
     // ROS_INFO("motion info ready");
@@ -93,7 +95,13 @@ Team::MotionCallback(const dmsgs::MotionInfo::ConstPtr& msg)
 void
 Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr& msg)
 {
-    info_.behavior_info = *msg;
+    std::lock_guard<std::mutex> lock(info_lock_);
+    dmsgs::BehaviorInfo behavior_info = *msg;
+    info_.role = behavior_info.current_role;
+    info_.state = behavior_info.team_play_state;
+    info_.priority = behavior_info.team_play_priority;
+    info_.dest = behavior_info.dest;
+    info_.final_dest = behavior_info.final_dest;
     // ROS_INFO("behavior info ready");
     behaviorReady_ = true;
 }
@@ -101,22 +109,27 @@ Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr& msg)
 void
 Team::VisionCallback(const dmsgs::VisionInfo::ConstPtr& msg)
 {
+    std::lock_guard<std::mutex> lock(info_lock_);
     dmsgs::VisionInfo vision_info = *msg;
     info_.see_ball = vision_info.see_ball;
     info_.ball_field = vision_info.ball_field;
     info_.ball_global = vision_info.ball_global;
     info_.robot_pos = vision_info.robot_pos;
-    // ROS_INFO("vision info ready");
-    // std::cout << "see ball: " <<info_.see_ball << std::endl;
+    info_.ball_quality = vision_info.ball_quality;
+    info_.field_quality = vision_info.field_quality;
+    info_.field_consistency = vision_info.field_consistency;
     visionReady_ = true;
 }
 
 void
 Team::GCCallback(const dmsgs::GCInfo::ConstPtr& msg)
 {
-    auto gcinfo = *msg;
-    penalised_ = gcinfo.penalised;
-    // ROS_INFO("GC info ready");
+    std::lock_guard<std::mutex> lock(info_lock_);
+    dmsgs::GCInfo gc_info = *msg;
+    penalised_ = gc_info.penalised;
+    info_.gc_connected = gc_info.connected;
+    info_.gc_state = gc_info.state;
+    info_.gc_state2 = gc_info.secondaryState;
 }
 
 } // namespace dnetwork
