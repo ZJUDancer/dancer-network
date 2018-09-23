@@ -41,7 +41,7 @@ Team::Team(ros::NodeHandle* nh)
     gc_sub_ = nh_->subscribe("/dnetwork_" + std::to_string(player_number_) + "/GCInfo", 1, &Team::GCCallback, this);
     pub_ = nh_->advertise<dmsgs::TeamInfo>("/dnetwork_" + std::to_string(player_number_) + "/TeamInfo", 1);
 
-    transmitter_ = new dtransmit::DTransmit("255.255.255.255");
+    transmitter_ = new dtransmit::DTransmit();
     transmitter_->addRawRecv(dconstant::network::TeamInfoBroadcastAddress, [this](void* buffer, std::size_t size) {
         if (size == sizeof(dmsgs::TeamInfo)) {
             std::unique_lock<std::mutex> lock(data_lock_);
@@ -71,7 +71,7 @@ Team::tick()
         info_.incapacitated = true;
     }
 
-    //TODO add lock for message receiving and sending
+    // TODO add lock for message receiving and sending
     if (motionReady_ && visionReady_ && behaviorReady_) {
         info_.txp_timestamp = ros::Time::now();
         transmitter_->sendRaw(dconstant::network::TeamInfoBroadcastAddress, (void*)&info_, sizeof(info_));
