@@ -38,7 +38,7 @@ GameController::GameController(ros::NodeHandle* nh)
 
     pub_ = nh_->advertise<dmsgs::GCInfo>("/dnetwork_" + std::to_string(playerNumber_) + "/GCInfo", 1);
 
-    transmitter_ = new dtransmit::DTransmit("255.255.255.255");
+    transmitter_ = new dtransmit::DTransmit();
     transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void* buffer, size_t size) {
         if (size == sizeof(RoboCupGameControlData)) {
             unique_lock<mutex> lock(dataLock_);
