@@ -5,13 +5,11 @@ add_definitions(-std=c++11 -Wall -O2)
 
 find_package(catkin
   REQUIRED
-  dmsgs
-  dtransmit
-  dmotion
-  dbehavior
-  dvision
-  dprocess
   roscpp
+  dmsgs
+  dconfig
+  dtransmit
+  dprocess
   )
 
 catkin_package(

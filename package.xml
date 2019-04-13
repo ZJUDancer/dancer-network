@@ -8,22 +8,19 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <buildtool_depend>dtransmit</buildtool_depend>
-  <run_depend>dtransmit</run_depend>
-
   <buildtool_depend>roscpp</buildtool_depend>
   <run_depend>roscpp</run_depend>
 
+  <buildtool_depend>dconfig</buildtool_depend>
+  <run_depend>dconfig</run_depend>
+
+  <buildtool_depend>dmsgs</buildtool_depend>
+  <run_depend>dmsgs</run_depend>
+
+  <buildtool_depend>dtransmit</buildtool_depend>
+  <run_depend>dtransmit</run_depend>
+
   <buildtool_depend>dprocess</buildtool_depend>
   <run_depend>dprocess</run_depend>
-
-  <buildtool_depend>dmotion</buildtool_depend>
-  <run_depend>dmotion</run_depend>
-
-  <buildtool_depend>dbehavior</buildtool_depend>
-  <run_depend>dbehavior</run_depend>
-
-  <buildtool_depend>dvision</buildtool_depend>
-  <run_depend>dvision</run_depend>
 
 </package>
