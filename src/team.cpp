@@ -54,7 +54,7 @@ Team::Team(ros::NodeHandle *nh) : DProcess(NETWORK_FREQ, false), nh_(nh) {
                                std::unique_lock<std::mutex> lock(data_lock_);
                                dmsgs::TeamInfo team_info =
                                    *(dmsgs::TeamInfo *)buffer;
-                               if (team_info.player_number != player_number_) {
+                               if (team_info.player_number != player_number_ && team_info.team_number == team_number_) {
                                  team_info.recv_timestamp = ros::Time::now();
                                  // ROS_INFO("Heared message from robot %d",
                                  // team_info.player_number);
@@ -70,6 +70,7 @@ Team::~Team() {}
 void Team::tick() {
   info_.player_number = player_number_;
   info_.incapacitated = false;
+  info_.team_number = team_number_;
 
   if (unstable_) {
     // std::cout << (int)unstable_ << " " << (int)penalised_ << std::endl;
