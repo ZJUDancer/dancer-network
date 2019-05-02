@@ -84,9 +84,15 @@ GameController::tick()
     bool ourDirectFreeKick = false;
     bool ourIndirectFreeKick = false;
     bool ourPenaltyKick = false;
+    bool ourCornerKick = false;
+    bool ourGoalKick = false;
+    bool ourThrowIn = false;
     bool enemyDirectFreeKick = false;
     bool enemyIndirectFreeKick = false;
     bool enemyPenaltyKick = false;
+    bool enemyCornerKick = false;
+    bool enemyGoalKick = false;
+    bool enemyThrowIn = false;
 
     if (state2 == STATE2_DIRECT_FREEKICK) {
         ourDirectFreeKick = (state2_team == teamNumber_);
@@ -97,6 +103,15 @@ GameController::tick()
     } else if (state2 == STATE2_PENALTYKICK) {
         ourPenaltyKick = (state2_team == teamNumber_);
         enemyPenaltyKick = !ourPenaltyKick;
+    } else if (state2 == STATE2_CORNER_KICK) {
+        ourCornerKick = (state2_team == teamNumber_);
+        enemyCornerKick = !ourCornerKick;
+    } else if (state2 == STATE2_GOAL_KICK) {
+        ourGoalKick = (state2_team == teamNumber_);
+        enemyGoalKick = !ourGoalKick;
+    } else if (state2 == STATE2_THROW_IN) {
+        ourThrowIn = (state2_team == teamNumber_);
+        enemyThrowIn = !ourThrowIn;
     }
 
     // std::cout << "\n\n\n\n\n\n";
@@ -137,9 +152,15 @@ GameController::tick()
     info_.ourPenaltyKick = ourPenaltyKick;
     info_.ourDirectFreeKick = ourDirectFreeKick;
     info_.ourIndirectFreeKick = ourIndirectFreeKick;
+    info_.ourCornerKick = ourCornerKick;
+    info_.ourGoalKick = ourGoalKick;
+    info_.ourThrowIn = ourThrowIn;
     info_.enemyPenaltyKick = enemyPenaltyKick;
     info_.enemyDirectFreeKick = enemyDirectFreeKick;
     info_.enemyIndirectFreeKick = enemyIndirectFreeKick;
+    info_.enemyCornerKick = enemyCornerKick;
+    info_.enemyGoalKick = enemyGoalKick;
+    info_.enemyThrowIn = enemyThrowIn;
 
     info_.state2Ready = state2_ready;
     info_.state2Freeze = state2_freeze;
