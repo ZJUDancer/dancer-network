@@ -45,6 +45,10 @@
 #define STATE2_DIRECT_FREEKICK      4
 #define STATE2_INDIRECT_FREEKICK    5
 #define STATE2_PENALTYKICK          6
+#define STATE2_CORNER_KICK          7
+#define STATE2_GOAL_KICK            8
+#define STATE2_THROW_IN             9
+
 
 #define PENALTY_NONE                        0
 
