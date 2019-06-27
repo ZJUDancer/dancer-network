@@ -78,14 +78,19 @@ GameController::tick()
 
     int state2 = data_.secondaryState;
     int state2_team = (int)data_.secondaryStateInfo[0];
+
     // Refer to https://github.com/RoboCup-Humanoid-TC/GameController/blob/master/src/data/states/SecondaryStateInfo.java
     // and https://github.com/RoboCup-Humanoid-TC/GameController/blob/master/src/controller/ui/ui/customized/GameInterruptionButton.java
     // The team that is performing the free kick
     // - 0 for Start placing, robots should stay still, referee places the ball on the ground
     // - 1 for End placing, robots can place themselves toward the ball
     // - 2 for Execute, robots should stay still and referees ask to remove illegally positioned robots
-    bool state2_ready = ((int)data_.secondaryStateInfo[1] == 1);
-    bool state2_freeze = !state2_ready;
+    bool state2_ready = false;
+    bool state2_freeze = false;
+    if (state2 != STATE2_NORMAL) {
+        state2_ready = ((int)data_.secondaryStateInfo[1] == 1);
+        state2_freeze = ((int)data_.secondaryStateInfo[1] == 0) or ((int)data_.secondaryStateInfo[1] == 2);
+    }
 
     bool ourDirectFreeKick = false;
     bool ourIndirectFreeKick = false;
