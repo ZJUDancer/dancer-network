@@ -116,6 +116,7 @@ void Team::VisionCallback(const dmsgs::VisionInfo::ConstPtr &msg) {
   dmsgs::VisionInfo vision_info = *msg;
   info_.see_ball = vision_info.see_ball;
   info_.see_circle = vision_info.see_circle;
+  info_.see_goal = vision_info.see_goal;
   info_.robot_pos = vision_info.robot_pos;
 
   info_.ball_field = vision_info.ball_field;
@@ -124,11 +125,8 @@ void Team::VisionCallback(const dmsgs::VisionInfo::ConstPtr &msg) {
   info_.circle_field = vision_info.circle_field;
   info_.circle_global = vision_info.circle_global;
 
-  info_.num_goals = vision_info.goals_global.size();
-  if (info_.num_goals > 0)
-    info_.goals_global1 = vision_info.goals_global[0];
-  if (info_.num_goals > 1)
-    info_.goals_global2 = vision_info.goals_global[1];
+  info_.goal_field = vision_info.goal_field;
+  info_.goal_global = vision_info.goal_global;
 
   info_.ball_quality = vision_info.ball_quality;
   info_.field_quality = vision_info.field_quality;
