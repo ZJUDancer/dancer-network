@@ -48,8 +48,10 @@ Team::Team(ros::NodeHandle *nh) : DProcess(NETWORK_FREQ, false), nh_(nh) {
       "/dnetwork_" + std::to_string(player_number_) + "/TeamInfo", 1);
 
   transmitter_ = new dtransmit::DTransmit();
-  transmitter_->addRawRecv(dconstant::network::TeamInfoBroadcastAddress,
+    transmitter_->addRawRecv(3838,
+  // transmitter_->addRawRecv(dconstant::network::TeamInfoBroadcastAddress,
                            [this](void *buffer, std::size_t size) {
+                            std::cout << "/n/nHeard From GameController000!!! /n" << std::endl;
                              if (size == sizeof(dmsgs::TeamInfo)) {
                                std::unique_lock<std::mutex> lock(data_lock_);
                                dmsgs::TeamInfo team_info =
@@ -78,7 +80,8 @@ void Team::tick() {
   }
 
   // TODO add lock for message receiving and sending
-  if (motionReady_ && visionReady_ && behaviorReady_) {
+  // if (motionReady_ && visionReady_ && behaviorReady_) {
+  if (1) {
     info_.txp_timestamp = ros::Time::now();
     transmitter_->sendRaw(dconstant::network::TeamInfoBroadcastAddress,
                           (void *)&info_, sizeof(info_));
