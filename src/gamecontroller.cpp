@@ -43,6 +43,7 @@ GameController::GameController(ros::NodeHandle* nh)
         std::cout << "/n/nHeard From GameController!!! /n" << std::endl;
         if (size == sizeof(RoboCupGameControlData)) {
             unique_lock<mutex> lock(dataLock_);
+            std::cout << "heard\n";
             ParseData(*(RoboCupGameControlData*)buffer);
         }
     });
