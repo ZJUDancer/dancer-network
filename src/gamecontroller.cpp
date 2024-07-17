@@ -37,17 +37,16 @@ GameController::GameController(ros::NodeHandle* nh)
     ret_.message = GAMECONTROLLER_RETURN_MSG_ALIVE;
 
     pub_ = nh_->advertise<dmsgs::GCInfo>("/dnetwork_" + std::to_string(playerNumber_) + "/GCInfo", 1);
-    std::cout << "Hello1\n\n\n";
+    // std::cout << "Hello1\n\n\n";
     transmitter_ = new dtransmit::DTransmit();
     transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void* buffer, size_t size) {
-        std::cout << "/n/nHeard From GameController!!! /n" << std::endl;
         if (size == sizeof(RoboCupGameControlData)) {
             unique_lock<mutex> lock(dataLock_);
-            std::cout << "heard\n";
+            // std::cout << "heard GC\n\n\n";
             ParseData(*(RoboCupGameControlData*)buffer);
         }
     });
-    std::cout << "Hello2\n\n\n";
+    // std::cout << "Hello2\n\n\n";
     transmitter_->startService();
 }
 
