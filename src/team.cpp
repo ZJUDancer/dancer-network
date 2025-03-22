@@ -103,12 +103,12 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   std::lock_guard<std::mutex> lock(info_lock_);
   dmsgs::BehaviorInfo behavior_info = *msg;
   info_.role = behavior_info.current_role;
-  info_.attack_right = behavior_info.attack_right;
+  // info_.attack_right = behavior_info.attack_right;
 
-  info_.state = behavior_info.team_play_state;
-  info_.kicker_id = behavior_info.kicker_id;
-  info_.priority = behavior_info.team_play_priority;
-  info_.mates_online = behavior_info.mates_online;
+  // info_.state = behavior_info.team_play_state;
+  // info_.kicker_id = behavior_info.kicker_id;
+  // info_.priority = behavior_info.team_play_priority;
+  // info_.mates_online = behavior_info.mates_online;
 
   info_.dest = behavior_info.dest;
   info_.final_dest = behavior_info.final_dest;
