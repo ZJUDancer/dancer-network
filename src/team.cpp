@@ -48,20 +48,20 @@ Team::Team(ros::NodeHandle *nh) : DProcess(NETWORK_FREQ, false), nh_(nh) {
       "/dnetwork_" + std::to_string(player_number_) + "/TeamInfo", 1);
 
   transmitter_ = new dtransmit::DTransmit();
-  transmitter_->addRawRecv(dconstant::network::TeamInfoBroadcastAddress,
-                           [this](void *buffer, std::size_t size) {
-                             if (size == sizeof(dmsgs::TeamInfo)) {
-                               std::unique_lock<std::mutex> lock(data_lock_);
-                               dmsgs::TeamInfo team_info =
-                                   *(dmsgs::TeamInfo *)buffer;
-                               if (team_info.player_number != player_number_ && team_info.team_number == team_number_) {
-                                 team_info.recv_timestamp = ros::Time::now();
-                                 // ROS_INFO("Heared message from robot %d",
-                                 // team_info.player_number);
-                                 pub_.publish(team_info);
-                               }
-                             }
-                           });
+  transmitter_->addRawRecv(dconstant::network::TeamInfoBroadcastAddress, [this](void *buffer, std::size_t size) {
+    if (size == sizeof(dmsgs::TeamInfo)) {
+      std::unique_lock<std::mutex> lock(data_lock_);
+      dmsgs::TeamInfo team_info =
+          *(dmsgs::TeamInfo *)buffer;
+      // if (true) {
+      if (team_info.team_number == team_number_) {
+      // if (team_info.player_number != player_number_ && team_info.team_number == team_number_) {
+        team_info.recv_timestamp = ros::Time::now();
+        // ROS_INFO("Heard message from robot %d in team %d\n", team_info.player_number, team_info.team_number);
+        pub_.publish(team_info);
+      }
+    }
+  });
   transmitter_->startService();
 }
 
@@ -78,7 +78,9 @@ void Team::tick() {
   }
 
   // TODO add lock for message receiving and sending
-  if (motionReady_ && visionReady_ && behaviorReady_) {
+  // if (motionReady_ && visionReady_ && behaviorReady_) {
+  if (behaviorReady_) {
+  // if (true) {
     info_.txp_timestamp = ros::Time::now();
     transmitter_->sendRaw(dconstant::network::TeamInfoBroadcastAddress,
                           (void *)&info_, sizeof(info_));
@@ -101,8 +103,13 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   std::lock_guard<std::mutex> lock(info_lock_);
   dmsgs::BehaviorInfo behavior_info = *msg;
   info_.role = behavior_info.current_role;
-  info_.state = behavior_info.team_play_state;
-  info_.priority = behavior_info.team_play_priority;
+  // info_.attack_right = behavior_info.attack_right;
+
+  // info_.state = behavior_info.team_play_state;
+  // info_.kicker_id = behavior_info.kicker_id;
+  // info_.priority = behavior_info.team_play_priority;
+  // info_.mates_online = behavior_info.mates_online;
+
   info_.dest = behavior_info.dest;
   info_.final_dest = behavior_info.final_dest;
   info_.time_since_last_kick = behavior_info.time_since_last_kick;
