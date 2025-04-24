@@ -42,7 +42,7 @@ GameController::GameController(ros::NodeHandle* nh)
     transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void* buffer, size_t size) {
         if (size == sizeof(RoboCupGameControlData)) {
             unique_lock<mutex> lock(dataLock_);
-            std::cout << "heard GC\n\n\n";
+            // std::cout << "heard GC\n\n\n";
             ParseData(*(RoboCupGameControlData*)buffer);
         }
     });
