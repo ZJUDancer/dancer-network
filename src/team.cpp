@@ -31,6 +31,9 @@ Team::Team(ros::NodeHandle *nh) : DProcess(NETWORK_FREQ, false), nh_(nh) {
   if (!nh_->getParam("/ZJUDancer/udpBroadcastAddress", udp_broadcast_address))
     throw std::runtime_error("Can't get udp broadcast address!");
 
+  if (!nh_->getParam("TEST", test))
+    throw std::runtime_error("Can't get test");
+
   // ROS subscriber and publisher
   motion_sub_ = nh_->subscribe("/dmotion_" + std::to_string(player_number_) +
                                    "/MotionInfo",

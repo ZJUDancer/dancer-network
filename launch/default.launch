@@ -11,6 +11,7 @@
         <env name="ROSCONSOLE_CONFIG_FILE" value="$(find dlaunch)/drosconsole.conf"/>
 
         <param name="RobotId" value="$(env ZJUDANCER_ROBOTID)" />
+        <param name="TEST" value="1" />
 
     </node>
 

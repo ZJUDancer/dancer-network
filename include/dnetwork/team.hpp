@@ -74,7 +74,7 @@ class Team : public dprocess::DProcess<Team>
     std::mutex info_lock_;
     //! TeamInfo
     dmsgs::TeamInfo info_;
-
+    int test;
     //! Robot ID for current player
     int player_number_;
     //! Team ID for current team
