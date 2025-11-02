@@ -178,7 +178,26 @@ GameController::tick()
     info_.state2Freeze = state2_freeze;
 
     pub_.publish(info_);
-    transmitter_->sendRaw(GAMECONTROLLER_RETURN_PORT, (void*)&ret_, sizeof(ret_));
+    // transmitter_->sendRaw(GAMECONTROLLER_RETURN_PORT, (void*)&ret_, sizeof(ret_));
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        perror("socket");
+        return;
+    }
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(GAMECONTROLLER_RETURN_PORT);
+    inet_pton(AF_INET, "192.168.1.83", &addr.sin_addr);
+
+    printf("Sending %ld bytes to %s:%d\n", sizeof(ret_), inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    for (int i = 0; i < sizeof(ret_); i++) {
+        printf("%02X ", ((uint8_t*)&ret_)[i]);
+    }
+    printf("\n");
+
+    sendto(sock, &ret_, sizeof(ret_), 0, (sockaddr*)&addr, sizeof(addr));
+    close(sock);
 }
 
 void
