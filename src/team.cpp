@@ -116,6 +116,7 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   info_.dest = behavior_info.dest;
   info_.final_dest = behavior_info.final_dest;
   info_.time_since_last_kick = behavior_info.time_since_last_kick;
+  info_.time_to_reach_ball = behavior_info.time_to_reach_ball;
   info_.attack_target = behavior_info.attack_target;
 
   // --- 新增：Voronoi 数据处理 (动态 -> 固定) ---
