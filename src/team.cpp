@@ -117,6 +117,22 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   info_.final_dest = behavior_info.final_dest;
   info_.time_since_last_kick = behavior_info.time_since_last_kick;
   info_.attack_target = behavior_info.attack_target;
+
+  // --- 新增：Voronoi 数据处理 (动态 -> 固定) ---
+  
+  // 1. 定义最大容量
+  const int MAX_VORONOI_SIZE = 10; 
+  // 2. 获取输入数据的实际大小
+  int input_size = behavior_info.voronoi_list.size();
+  // 3. 计算实际要拷贝的数量 (取较小值以防止内存溢出)
+  int valid_count = std::min(input_size, MAX_VORONOI_SIZE);
+  // 4. 赋值长度字段
+  info_.voronoi_list_length = (uint8_t)valid_count;
+  // 5. 循环搬运数据
+  for (int i = 0; i < valid_count; i++) {
+      info_.voronoi_list[i] = behavior_info.voronoi_list[i];
+  }
+
   // ROS_INFO("behavior info ready");
   behaviorReady_ = true;
 }
