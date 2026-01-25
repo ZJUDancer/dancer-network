@@ -13,7 +13,6 @@
 
 #include "dnetwork/team.hpp"
 #include <dmsgs/GCInfo.h>
-
 namespace dnetwork {
 
 static const int NETWORK_FREQ = 30;
@@ -105,6 +104,7 @@ void Team::MotionCallback(const dmsgs::MotionInfo::ConstPtr &msg) {
 void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   std::lock_guard<std::mutex> lock(info_lock_);
   dmsgs::BehaviorInfo behavior_info = *msg;
+  
   info_.role = behavior_info.current_role;
   info_.attack_right = behavior_info.attack_right;
 
@@ -124,14 +124,14 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   // 1. 定义最大容量
   const int MAX_VORONOI_SIZE = 10; 
   // 2. 获取输入数据的实际大小
-  int input_size = behavior_info.voronoi_list.size();
+  int input_size = behavior_info.voronoi.size();
   // 3. 计算实际要拷贝的数量 (取较小值以防止内存溢出)
   int valid_count = std::min(input_size, MAX_VORONOI_SIZE);
   // 4. 赋值长度字段
   info_.voronoi_list_length = (uint8_t)valid_count;
   // 5. 循环搬运数据
   for (int i = 0; i < valid_count; i++) {
-      info_.voronoi_list[i] = behavior_info.voronoi_list[i];
+      info_.voronoi_list[i] = behavior_info.voronoi[i];
   }
 
   // ROS_INFO("behavior info ready");
