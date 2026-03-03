@@ -79,19 +79,12 @@ class GameController : public dprocess::DProcess<GameController>
     bool IsThisGame(RoboCupGameControlData& gameData);
 
     /**
-     * @brief Swap data about team cyan and team magenta
-     *
-     * @param gameData - received data buffer
-     */
-    void RawSwapTeams(RoboCupGameControlData& gameData);
-
-    /**
-     * @brief Check whether or not current data is equal to previous one 
+     * @brief Check whether or not current data is equal to previous one
      *
      * @param gameData - currently received data buffer
      * @param pervious - previously received data buffer
      *
-     * @return whether or not current data is equal to previous one 
+     * @return whether or not current data is equal to previous one
      */
     bool GameDataEqual(RoboCupGameControlData& gameData, RoboCupGameControlData& pervious);
 
