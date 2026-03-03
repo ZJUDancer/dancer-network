@@ -260,8 +260,67 @@ ROS_WARN("Version invalid, recv: %u, need: %d", gameData.version, ...);
 
 ---
 
-## 三、已知遗留问题
+### 修改文件：`dancer-msgs/msg/GCInfo.msg`
 
-- `GCInfo.msg` 中的 `secondaryState` 字段语义已变为 `gamePhase`，`STATE2_*` 常量定义与新版 `GAME_PHASE_*` 仍需对齐，如需完整适配建议同步更新 `GCInfo.msg`。
-- 新增的 `ret_.fallen`、`ret_.pose`、`ret_.ball` 字段目前为默认值（0 / -1），需后续从其他模块获取真实数据填充。
+#### 补充 STATE_STANDBY 常量
+
+**修改原因**：新版协议新增 `STATE_STANDBY = 5`，旧版 msg 中未定义，下游模块收到 state=5 时无法识别。
+
+```
+# 新增
+uint8 STATE_STANDBY            =  5
+```
+
+---
+
+## 三、与 PDF 对比发现的问题及修复（第二轮）
+
+### 1. secsRemaining / secondaryTime 负值溢出
+
+**问题**：新版字段类型从 `uint16_t` 改为 `int16_t`，可能出现负值（如加时赛倒计时）。旧判断条件 `< 10000` 对负数也成立，会将负值赋给 `GCInfo.msg` 的 `uint16` 字段导致溢出为极大正数。
+
+```cpp
+// 旧版（有溢出风险）
+info_.secsRemaining = data_.secsRemaining < 10000 ? data_.secsRemaining : 0;
+
+// 修复后
+info_.secsRemaining = (data_.secsRemaining >= 0 && data_.secsRemaining < 10000) ? (uint16_t)data_.secsRemaining : 0;
+info_.secondaryTime = (data_.secondaryTime >= 0 && data_.secondaryTime < 10000) ? (uint16_t)data_.secondaryTime : 0;
+```
+
+### 2. setPlayFreeze 始终为 false
+
+**问题**：旧版通过 `secondaryStateInfo[1]` 区分定位球三阶段，新版该字段已删除。原修复代码将 `setPlayFreeze` 硬编码为 false，导致定位球期间机器人不会静止。
+
+**修复**：利用 `state` 字段判断阶段——`STATE_SET` 时为 freeze（裁判摆球，机器人静止），`STATE_PLAYING` 时为 ready（可以行动）：
+
+```cpp
+// 修复后
+if (setPlay != SET_PLAY_NONE) {
+    setPlayFreeze = (data_.state == STATE_SET);
+    setPlayReady  = (data_.state == STATE_PLAYING);
+}
+```
+
+### 3. info_.gameType 未赋值
+
+**问题**：`GCInfo.msg` 中有 `uint8 gameType` 字段，原代码和初版修改都未对其赋值，下游模块读取到的始终是默认值 0。新版对应字段为 `competitionPhase`。
+
+```cpp
+// 修复后（赋值 competitionPhase）
+info_.gameType = data_.competitionPhase;
+```
+
+### 4. STATE_STANDBY 未定义
+
+**问题**：新版协议新增 `STATE_STANDBY = 5`，`GCInfo.msg` 中只有 STATE 0-4，下游模块无法识别该状态。
+
+**修复**：在 `GCInfo.msg` 的 STATE 常量区追加 `STATE_STANDBY = 5`。
+
+---
+
+## 四、遗留待处理项
+
+- `ret_.fallen`、`ret_.pose`、`ret_.ball` 目前为默认值（0 / -1），需后续从其他模块获取真实数据填充。
 - 旧版有 `ourIndirectFreeKick` / `enemyIndirectFreeKick`，新版协议中 indirect free kick 已并入 `SET_PLAY_PUSHING_FREE_KICK`，这两个字段在新版中始终为 false。
+- `GCInfo.msg` 中的 `STATE2_*` 常量语义已变为 `GAME_PHASE_*`，如需完整对齐建议后续重命名。

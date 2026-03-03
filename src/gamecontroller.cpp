@@ -90,8 +90,10 @@ GameController::tick()
     bool setPlayReady = false;
     bool setPlayFreeze = false;
     if (setPlay != SET_PLAY_NONE) {
-        setPlayReady = true;
-        setPlayFreeze = false;
+        // In SET state: robots must stay still (freeze)
+        // In PLAYING state: kicking team may position (ready), others wait
+        setPlayFreeze = (data_.state == STATE_SET);
+        setPlayReady = (data_.state == STATE_PLAYING);
     }
 
     bool ourDirectFreeKick = false;
@@ -147,12 +149,13 @@ GameController::tick()
 
     // FIXME(MWX): maybe chushiqing if the Referee misoperating
     info_.connected = connected_;
+    info_.gameType = data_.competitionPhase;
     info_.state = data_.state;
     info_.secondaryState = data_.gamePhase;
     info_.firstHalf = data_.firstHalf;
     info_.kickoff = kickoff;
-    info_.secsRemaining = data_.secsRemaining < 10000 ? data_.secsRemaining : 0;
-    info_.secondaryTime = data_.secondaryTime < 10000 ? data_.secondaryTime : 0;
+    info_.secsRemaining = (data_.secsRemaining >= 0 && data_.secsRemaining < 10000) ? (uint16_t)data_.secsRemaining : 0;
+    info_.secondaryTime = (data_.secondaryTime >= 0 && data_.secondaryTime < 10000) ? (uint16_t)data_.secondaryTime : 0;
     info_.secsTillUnpenalised = ourTeam->players[playerNumber_ - 1].secsTillUnpenalised;
     info_.ourScore = ourScore;
     info_.enemyScore = enemyScore;
