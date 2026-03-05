@@ -25,6 +25,7 @@
 #include <mutex>
 #include <ros/ros.h>
 #include <string>
+#include <arpa/inet.h>
 
 namespace dnetwork {
 
@@ -95,6 +96,15 @@ class Team : public dprocess::DProcess<Team>
     //! Flag for whether or not motion info is ready
     bool motionReady_ = false;
 
+    // --- 新增：记录上次发送时间，用于动态频率控制 ---
+    //! Last time team info was sent
+    ros::Time last_send_time_;
+    ros::Time last_monitor_send_time;
+    //! 新增：目标单播 IP 地址 (例如监控端或上位机 IP)
+    std::string unicast_target_address_;
+    //! 新增：目标端口 (可以设为和广播不同的端口，或者相同)
+    int unicast_target_port_;
+    
     /**
      * @brief Callback function for motion message 
      *

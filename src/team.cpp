@@ -33,6 +33,14 @@ Team::Team(ros::NodeHandle *nh) : DProcess(NETWORK_FREQ, false), nh_(nh) {
   if (!nh_->getParam("TEST", test))
     throw std::runtime_error("Can't get test");
 
+  // 获取单播目标 IP
+  if (!nh_->getParam("/ZJUDancer/UnicastTargetAddress", unicast_target_address_))
+        unicast_target_address_ = "192.168.1.100"; // 默认 fallback 地址
+
+  // 获取单播目标端口 (假设为 10001)
+  if (!nh_->getParam("/ZJUDancer/UnicastTargetPort", unicast_target_port_))
+        unicast_target_port_ = 10001; 
+
   // ROS subscriber and publisher
   motion_sub_ = nh_->subscribe("/dmotion_" + std::to_string(player_number_) +
                                    "/MotionInfo",
@@ -65,6 +73,8 @@ Team::Team(ros::NodeHandle *nh) : DProcess(NETWORK_FREQ, false), nh_(nh) {
     }
   });
   transmitter_->startService();
+  last_send_time_ = ros::Time::now(); 
+  last_monitor_send_time = ros::Time::now();
 }
 
 Team::~Team() {}
@@ -78,19 +88,66 @@ void Team::tick() {
     // std::cout << (int)unstable_ << " " << (int)penalised_ << std::endl;
     info_.incapacitated = true;
   }
+    // --- 动态频率控制逻辑 ---
+  double target_interval = 0.5; // 默认低频：0.5秒一次 (2Hz)
+  double monitor_send_interval = 1.0;
+  if (info_.state == dmsgs::TeamInfo::BALL_HANDLING) {
+        // 状态1：持球机器人，最高频 (15Hz)
+        target_interval = 0.067; 
+    } 
+  else if (info_.see_ball) {
+        // 状态2：看到球的机器人，根据距离线性或阶梯调整
+        double dist = std::sqrt(std::pow(info_.ball_field.x, 2) + std::pow(info_.ball_field.y, 2));
+        
+        if (dist < 100.0) {      // 1米以内：高频 (10Hz)
+            target_interval = 0.1;
+        } else if (dist < 300.0) { // 3米以内：中频 (5Hz)
+            target_interval = 0.2;
+        } else {                 // 3米以外：低中频 (2.5Hz)
+            target_interval = 0.4;
+        }
+    } 
+  else {
+        // 状态3：看不到球且不持球，最低频 (1Hz)
+        target_interval = 1.0;
+    }
+  ros::Time now = ros::Time::now();
+  if ((now - last_send_time_).toSec() >= target_interval) {
+    // TODO add lock for message receiving and sending
+    // if (motionReady_ && visionReady_ && behaviorReady_) {
+    if (behaviorReady_) {
+    // if (true) {
+      info_.txp_timestamp = ros::Time::now();
+      transmitter_->sendRaw(dconstant::network::TeamInfoBroadcastAddress,
+                            (void *)&info_, sizeof(info_));
+      // 更新最后发送时间
+      last_send_time_ = now; 
 
-  // TODO add lock for message receiving and sending
-  // if (motionReady_ && visionReady_ && behaviorReady_) {
-  if (behaviorReady_) {
-  // if (true) {
-    info_.txp_timestamp = ros::Time::now();
-    transmitter_->sendRaw(dconstant::network::TeamInfoBroadcastAddress,
-                          (void *)&info_, sizeof(info_));
-    motionReady_ = false;
-    visionReady_ = false;
-    behaviorReady_ = false;
+      motionReady_ = false;
+      visionReady_ = false;
+      behaviorReady_ = false;
+    }
+    // ROS_INFO("team info is sent");
   }
-  // ROS_INFO("team info is sent");
+  if ((now - last_monitor_send_time).toSec() >= monitor_send_interval){
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+        if (sock >= 0) {
+            sockaddr_in addr{};
+            addr.sin_family = AF_INET;
+            addr.sin_port = htons(unicast_target_port_); // 设置目标端口
+            inet_pton(AF_INET, unicast_target_address_.c_str(), &addr.sin_addr); // 设置目标IP
+
+            // 执行单播发送
+            sendto(sock, &info_, sizeof(info_), 0, (sockaddr*)&addr, sizeof(addr));
+                
+            // 打印调试信息 (可选)
+            // printf("Unicast TeamInfo to %s:%d\n", unicast_target_address_.c_str(), unicast_target_port_);
+                
+            close(sock);
+            }
+        last_monitor_send_time = now;
+
+  }
 }
 
 void Team::MotionCallback(const dmsgs::MotionInfo::ConstPtr &msg) {
