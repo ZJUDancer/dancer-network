@@ -109,9 +109,12 @@ GameController::tick()
     bool enemyGoalKick = false;
     bool enemyThrowIn = false;
 
-    if (setPlay == SET_PLAY_PUSHING_FREE_KICK) {
+    if (setPlay == SET_PLAY_DIRECT_FREE_KICK) {
         ourDirectFreeKick = (kickingTeam == teamNumber_);
         enemyDirectFreeKick = !ourDirectFreeKick;
+    } else if (setPlay == SET_PLAY_INDIRECT_FREE_KICK) {
+        ourIndirectFreeKick = (kickingTeam == teamNumber_);
+        enemyIndirectFreeKick = !ourIndirectFreeKick;
     } else if (setPlay == SET_PLAY_PENALTY_KICK) {
         ourPenaltyKick = (kickingTeam == teamNumber_);
         enemyPenaltyKick = !ourPenaltyKick;
@@ -121,7 +124,7 @@ GameController::tick()
     } else if (setPlay == SET_PLAY_GOAL_KICK) {
         ourGoalKick = (kickingTeam == teamNumber_);
         enemyGoalKick = !ourGoalKick;
-    } else if (setPlay == SET_PLAY_KICK_IN) {
+    } else if (setPlay == SET_PLAY_THROW_IN) {
         ourThrowIn = (kickingTeam == teamNumber_);
         enemyThrowIn = !ourThrowIn;
     }
@@ -149,7 +152,7 @@ GameController::tick()
 
     // FIXME(MWX): maybe chushiqing if the Referee misoperating
     info_.connected = connected_;
-    info_.gameType = data_.competitionPhase;
+    info_.gameType = data_.competitionType;
     info_.state = data_.state;
     info_.secondaryState = data_.gamePhase;
     info_.firstHalf = data_.firstHalf;
