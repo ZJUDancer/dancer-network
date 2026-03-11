@@ -179,7 +179,7 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   // --- 新增：Voronoi 数据处理 (动态 -> 固定) ---
   
   // 1. 定义最大容量
-  const int MAX_VORONOI_SIZE = 10; 
+  const int MAX_VORONOI_SIZE = 6; 
   // 2. 获取输入数据的实际大小
   int input_size = behavior_info.voronoi.size();
   // 3. 计算实际要拷贝的数量 (取较小值以防止内存溢出)
