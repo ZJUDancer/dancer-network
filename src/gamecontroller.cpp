@@ -154,6 +154,7 @@ GameController::tick()
     info_.connected = connected_;
     info_.gameType = data_.competitionType;
     info_.state = data_.state;
+    info_.stopped = data_.stopped;
     info_.secondaryState = data_.gamePhase;
     info_.firstHalf = data_.firstHalf;
     info_.kickoff = kickoff;
