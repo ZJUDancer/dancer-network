@@ -176,7 +176,7 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   info_.time_to_reach_ball = behavior_info.time_to_reach_ball;
   info_.attack_target = behavior_info.attack_target;
 
-  info_.ball_grabbed = behavior_info.ball_grabbed;
+  info_.ball_global = behavior_info.ball_global;
 
   // --- 新增：Voronoi 数据处理 (动态 -> 固定) ---
   
