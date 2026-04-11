@@ -92,8 +92,8 @@ GameController::tick()
     if (setPlay != SET_PLAY_NONE) {
         // In SET state: robots must stay still (freeze)
         // In PLAYING state: kicking team may position (ready), others wait
-        setPlayFreeze = (data_.state == STATE_SET);
-        setPlayReady = (data_.state == STATE_PLAYING);
+        setPlayFreeze = (data_.state == STATE_SET) || data_.stopped;
+        setPlayReady = (data_.state == STATE_PLAYING) && !data_.stopped;
     }
 
     bool ourDirectFreeKick = false;
@@ -155,7 +155,8 @@ GameController::tick()
     info_.gameType = data_.competitionType;
     info_.state = data_.state;
     info_.stopped = data_.stopped;
-    info_.secondaryState = data_.gamePhase;
+    info_.gamePhase = data_.gamePhase;
+    info_.setPlay = data_.setPlay;
     info_.firstHalf = data_.firstHalf;
     info_.kickoff = kickoff;
     info_.secsRemaining = (data_.secsRemaining >= 0 && data_.secsRemaining < 10000) ? (uint16_t)data_.secsRemaining : 0;
