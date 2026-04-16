@@ -176,7 +176,6 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   info_.time_to_reach_ball = behavior_info.time_to_reach_ball;
   info_.attack_target = behavior_info.attack_target;
 
-  info_.ball_global = behavior_info.ball_global;
 
   // --- 新增：Voronoi 数据处理 (动态 -> 固定) ---
   
@@ -200,13 +199,58 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
 void Team::VisionCallback(const dmsgs::VisionInfo::ConstPtr &msg) {
   std::lock_guard<std::mutex> lock(info_lock_);
   dmsgs::VisionInfo vision_info = *msg;
+  info_.x_features_length = 0;
+  info_.t_features_length = 0;
+  info_.l_features_length = 0;
+  info_.penalty_marks_length = 0;
+
+  for (auto &feature : info_.x_features) {
+    feature = dmsgs::FieldFeature();
+  }
+  for (auto &feature : info_.t_features) {
+    feature = dmsgs::FieldFeature();
+  }
+  for (auto &feature : info_.l_features) {
+    feature = dmsgs::FieldFeature();
+  }
+  for (auto &feature : info_.penalty_marks) {
+    feature = dmsgs::FieldFeature();
+  }
+
   info_.see_ball = vision_info.see_ball;
   info_.see_circle = vision_info.see_circle;
   info_.see_goal = vision_info.see_goal;
   info_.robot_pos = vision_info.robot_pos;
 
   info_.ball_field = vision_info.ball_field;
-  // info_.ball_global = vision_info.ball_global;
+  info_.ball_global = vision_info.ball_global;
+
+  for (const auto &feature : vision_info.features_field) {
+    switch (feature.feature) {
+    case dmsgs::FieldFeature::X_INTXN:
+      if (info_.x_features_length < info_.x_features.size()) {
+        info_.x_features[info_.x_features_length++] = feature;
+      }
+      break;
+    case dmsgs::FieldFeature::T_INTXN:
+      if (info_.t_features_length < info_.t_features.size()) {
+        info_.t_features[info_.t_features_length++] = feature;
+      }
+      break;
+    case dmsgs::FieldFeature::L_INTXN:
+      if (info_.l_features_length < info_.l_features.size()) {
+        info_.l_features[info_.l_features_length++] = feature;
+      }
+      break;
+    case dmsgs::FieldFeature::PENALTY_MARK:
+      if (info_.penalty_marks_length < info_.penalty_marks.size()) {
+        info_.penalty_marks[info_.penalty_marks_length++] = feature;
+      }
+      break;
+    default:
+      break;
+    }
+  }
 
   info_.circle_field = vision_info.circle_field;
   info_.circle_global = vision_info.circle_global;
