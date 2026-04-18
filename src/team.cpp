@@ -176,7 +176,7 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   info_.time_to_reach_ball = behavior_info.time_to_reach_ball;
   info_.attack_target = behavior_info.attack_target;
 
-  info_.ball_global = behavior_info.ball_global;
+  // info_.ball_global = behavior_info.ball_global;
 
   // --- 新增：Voronoi 数据处理 (动态 -> 固定) ---
   
@@ -206,7 +206,7 @@ void Team::VisionCallback(const dmsgs::VisionInfo::ConstPtr &msg) {
   info_.robot_pos = vision_info.robot_pos;
 
   info_.ball_field = vision_info.ball_field;
-  // info_.ball_global = vision_info.ball_global;
+  info_.ball_global = vision_info.ball_global;
 
   info_.circle_field = vision_info.circle_field;
   info_.circle_global = vision_info.circle_global;
