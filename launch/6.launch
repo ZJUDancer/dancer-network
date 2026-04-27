@@ -14,6 +14,15 @@
 
     </node>
 
+    <node pkg="dnetwork"
+          name="whistle_detection_6"
+          type="whistle_detection_node"
+          output="screen"
+          respawn="false"
+          required="false"
+          cwd="node"
+          args="" />
+
     <rosparam command="load" file="$(find dconfig)/global.yml"/>
 
 </launch>

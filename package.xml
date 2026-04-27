@@ -11,6 +11,9 @@
   <buildtool_depend>roscpp</buildtool_depend>
   <run_depend>roscpp</run_depend>
 
+  <build_depend>std_msgs</build_depend>
+  <run_depend>std_msgs</run_depend>
+
   <buildtool_depend>dconfig</buildtool_depend>
   <run_depend>dconfig</run_depend>
 

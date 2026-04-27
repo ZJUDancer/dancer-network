@@ -20,6 +20,7 @@
 #include <mutex>
 #include <ros/ros.h>
 #include <string>
+#include <std_msgs/String.h>
 
 namespace dnetwork {
 /**
@@ -88,11 +89,23 @@ class GameController : public dprocess::DProcess<GameController>
      */
     bool GameDataEqual(RoboCupGameControlData& gameData, RoboCupGameControlData& pervious);
 
+    /**
+     * @brief Check whether a whistle may advance our kickoff from SET to PLAYING.
+     */
+    bool CanWhistleOverridePlaying(const TeamInfo* ourTeam) const;
+
+    /**
+     * @brief Callback for whistle detection events.
+     */
+    void WhistleCallback(const std_msgs::String::ConstPtr& msg);
+
   private:
     //! Node handler
     ros::NodeHandle* nh_;
     //! Publisher for GameControl messages
     ros::Publisher pub_;
+    //! Subscriber for whistle detection events
+    ros::Subscriber whistle_sub_;
     //! GameControl messages
     dmsgs::GCInfo info_;
 
@@ -117,6 +130,8 @@ class GameController : public dprocess::DProcess<GameController>
     bool penalised_;
     //! Flag for whether or not our team is cyan
     bool teamCyan_;
+    //! Flag for whether a whistle is overriding our kickoff SET state
+    bool whistle_override_active_;
 
     //! Robot ID for current player
     int playerNumber_;

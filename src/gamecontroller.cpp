@@ -22,6 +22,10 @@ GameController::GameController(ros::NodeHandle* nh)
   : DProcess(FREQ, false)
   , nh_(nh)
   , last_valid_packet_timestamp_(0)
+  , connected_(false)
+  , penalised_(false)
+  , teamCyan_(false)
+  , whistle_override_active_(false)
 {
     if (!nh_->getParam("/ZJUDancer/GameControllerAddress", gameControllerAddress_))
         throw std::runtime_error("Can't get gamecontroller address!");
@@ -43,6 +47,7 @@ GameController::GameController(ros::NodeHandle* nh)
     ret_.ball[1] = 0.f;
 
     pub_ = nh_->advertise<dmsgs::GCInfo>("/dnetwork_" + std::to_string(playerNumber_) + "/GCInfo", 1);
+    whistle_sub_ = nh_->subscribe("/whistle_detected", 1, &GameController::WhistleCallback, this);
     // std::cout << "Hello1\n\n\n";
     transmitter_ = new dtransmit::DTransmit();
     transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void* buffer, size_t size) {
@@ -86,15 +91,6 @@ GameController::tick()
     int gamePhase = data_.gamePhase;
     int setPlay = data_.setPlay;
     int kickingTeam = (int)data_.kickingTeam;
-
-    bool setPlayReady = false;
-    bool setPlayFreeze = false;
-    if (setPlay != SET_PLAY_NONE) {
-        // In SET state: robots must stay still (freeze)
-        // In PLAYING state: kicking team may position (ready), others wait
-        setPlayFreeze = (data_.state == STATE_SET) || data_.stopped;
-        setPlayReady = (data_.state == STATE_PLAYING) && !data_.stopped;
-    }
 
     bool ourDirectFreeKick = false;
     bool ourIndirectFreeKick = false;
@@ -150,10 +146,30 @@ GameController::tick()
     auto penalty = ourTeam->players[playerNumber_ - 1].penalty;
     penalised_ = (penalty != PENALTY_NONE);
 
+    if (data_.state == STATE_PLAYING) {
+        whistle_override_active_ = false;
+    } else if (whistle_override_active_ && !CanWhistleOverridePlaying(ourTeam)) {
+        whistle_override_active_ = false;
+    }
+
+    uint8_t effectiveState = data_.state;
+    if (whistle_override_active_ && CanWhistleOverridePlaying(ourTeam)) {
+        effectiveState = STATE_PLAYING;
+    }
+
+    bool setPlayReady = false;
+    bool setPlayFreeze = false;
+    if (setPlay != SET_PLAY_NONE) {
+        // In SET state: robots must stay still (freeze)
+        // In PLAYING state: kicking team may position (ready), others wait
+        setPlayFreeze = (effectiveState == STATE_SET) || data_.stopped;
+        setPlayReady = (effectiveState == STATE_PLAYING) && !data_.stopped;
+    }
+
     // FIXME(MWX): maybe chushiqing if the Referee misoperating
     info_.connected = connected_;
     info_.gameType = data_.competitionType;
-    info_.state = data_.state;
+    info_.state = effectiveState;
     info_.stopped = data_.stopped;
     info_.gamePhase = data_.gamePhase;
     info_.setPlay = data_.setPlay;
@@ -204,6 +220,46 @@ GameController::tick()
 
     sendto(sock, &ret_, sizeof(ret_), 0, (sockaddr*)&addr, sizeof(addr));
     close(sock);
+}
+
+bool
+GameController::CanWhistleOverridePlaying(const TeamInfo* ourTeam) const
+{
+    if (ourTeam == nullptr || playerNumber_ <= 0 || playerNumber_ > MAX_NUM_PLAYERS) {
+        return false;
+    }
+
+    return connected_ &&
+           data_.state == STATE_SET &&
+           data_.kickingTeam == teamNumber_ &&
+           data_.gamePhase == GAME_PHASE_NORMAL &&
+           data_.setPlay == SET_PLAY_NONE &&
+           !data_.stopped &&
+           ourTeam->players[playerNumber_ - 1].penalty == PENALTY_NONE;
+}
+
+void
+GameController::WhistleCallback(const std_msgs::String::ConstPtr& msg)
+{
+    if (msg->data != "whistle_detected") {
+        return;
+    }
+
+    unique_lock<mutex> lock(dataLock_);
+
+    TeamInfo* ourTeam = nullptr;
+    if (data_.teams[0].teamNumber == teamNumber_) {
+        ourTeam = &(data_.teams[0]);
+    } else if (data_.teams[1].teamNumber == teamNumber_) {
+        ourTeam = &(data_.teams[1]);
+    }
+
+    if (CanWhistleOverridePlaying(ourTeam)) {
+        whistle_override_active_ = true;
+        ROS_INFO("Whistle accepted: overriding our kickoff SET state to PLAYING");
+    } else {
+        ROS_INFO("Whistle ignored: not our kickoff SET state");
+    }
 }
 
 void
