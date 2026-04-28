@@ -28,6 +28,7 @@ constexpr int kInputChannels = 2;
 constexpr int kInputFrames = 1024;
 constexpr int kInputSampleRate = 48000;
 constexpr int kDetectorChannels = 3;
+constexpr int kDetectorTestFrames = 1024;
 constexpr int kDetectorSampleRate = 16000;
 constexpr const char *kPcmDevice = "hw:3,0";
 constexpr const char *kWhistleTopic = "/whistle_detected";
@@ -151,8 +152,10 @@ int runWavTest(const char *path) {
   std::printf("Testing whistle detection from WAV: %s\n", path);
   std::printf("Input: %d frames, 3ch PCM S16, 16 kHz\n", total_frames);
 
-  for (int offset = 0; offset + kFrames <= total_frames; offset += kFrames) {
-    bool ready = detector.processFrame(samples.data() + offset * 3, kFrames);
+  for (int offset = 0; offset + kDetectorTestFrames <= total_frames;
+       offset += kDetectorTestFrames) {
+    bool ready = detector.processFrame(samples.data() + offset * kDetectorChannels,
+                                       kDetectorTestFrames);
     if (ready && !was_ready) {
       std::printf("Whistle detector ready (noise floor calibrated).\n");
       was_ready = true;
