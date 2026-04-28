@@ -86,6 +86,8 @@ class Team : public dprocess::DProcess<Team>
 
     //! Flag for whether or not robot is penalised
     bool penalised_ = false;
+    //! Flag for whether or not game controller has stopped play
+    bool gc_stopped_ = false;
     //! Flag for whether or not robot is unstable
     bool unstable_ = true;
 

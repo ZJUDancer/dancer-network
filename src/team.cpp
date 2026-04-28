@@ -111,8 +111,26 @@ void Team::tick() {
         // 状态3：看不到球且不持球，最低频 (1Hz)
         target_interval = 1.0;
     }
+
+  bool has_online_teammate = false;
+  for (std::size_t i = 0; i < info_.mates_online.size(); ++i) {
+    if (static_cast<int>(i) + 1 == player_number_) {
+      continue;
+    }
+    if (info_.mates_online[i]) {
+      has_online_teammate = true;
+      break;
+    }
+  }
+  if (!has_online_teammate) {
+    target_interval = 1.0;
+  }
+
   ros::Time now = ros::Time::now();
-  if ((now - last_send_time_).toSec() >= target_interval) {
+  const bool allow_broadcast_send = !gc_stopped_ && !penalised_;
+
+  if (allow_broadcast_send &&
+      (now - last_send_time_).toSec() >= target_interval) {
     // TODO add lock for message receiving and sending
     // if (motionReady_ && visionReady_ && behaviorReady_) {
     if (behaviorReady_) {
@@ -224,6 +242,7 @@ void Team::GCCallback(const dmsgs::GCInfo::ConstPtr &msg) {
   std::lock_guard<std::mutex> lock(info_lock_);
   dmsgs::GCInfo gc_info = *msg;
   penalised_ = gc_info.penalised;
+  gc_stopped_ = gc_info.stopped;
   info_.gc_connected = gc_info.connected;
   info_.gc_state = gc_info.state;
   info_.gamePhase = gc_info.gamePhase;
