@@ -49,25 +49,15 @@ target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
 )
 
-set(WHISTLE_DETECTION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/whistle_detection)
-set(DUERWEN_LIB_DIR ${WHISTLE_DETECTION_DIR}/third_party/lib)
-
 add_executable(whistle_detection_node
   src/whistle_detection/src/main.cpp
   src/whistle_detection/src/whistle_detection.cpp
   src/whistle_detection/third_party/src/duerwen_alsa.c
-  src/whistle_detection/third_party/src/RecvDataCache.c
   )
 
 target_link_libraries(whistle_detection_node
-  ${DUERWEN_LIB_DIR}/libduerwen_wakeup_DOA_v1.1.0_20251113.so
   ${ALSA_LIBRARIES}
   ${FFTW3F_LIB}
   pthread
   ${catkin_LIBRARIES}
-  )
-
-set_target_properties(whistle_detection_node PROPERTIES
-  BUILD_RPATH "${DUERWEN_LIB_DIR}"
-  INSTALL_RPATH "${DUERWEN_LIB_DIR}"
   )

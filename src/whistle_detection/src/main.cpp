@@ -1,14 +1,12 @@
 /**
- * Whistle detection for Booster robot microphone (libduerwen).
- * Pipeline: 6ch ALSA -> Duerwen DSP -> AEC 3ch -> FFT whistle detection.
+ * Whistle detection for HKMIC USB microphone.
+ * Pipeline: 2ch 48 kHz ALSA -> mono 16 kHz 3ch detector stream -> FFT whistle detection.
  * Publishes to /whistle_detected ROS topic when whistle is heard.
  */
 
 #include "whistle_detection.h"
 
 extern "C" {
-#include <RecvDataCache.h>
-#include <WakeupApi.h>
 #include <duerwen_alsa.h>
 }
 
@@ -26,10 +24,12 @@ extern "C" {
 
 namespace {
 
-constexpr int kChannels = 6;
-constexpr int kFrames = 1024;
-constexpr int kSampleRate = 16000;
-constexpr const char *kPcmDevice = "hw:1,0";
+constexpr int kInputChannels = 2;
+constexpr int kInputFrames = 1024;
+constexpr int kInputSampleRate = 48000;
+constexpr int kDetectorChannels = 3;
+constexpr int kDetectorSampleRate = 16000;
+constexpr const char *kPcmDevice = "hw:3,0";
 constexpr const char *kWhistleTopic = "/whistle_detected";
 
 volatile sig_atomic_t g_running = 1;
@@ -114,7 +114,7 @@ bool readRecordedWav(const char *path, std::vector<int16_t> *samples,
   }
 
   if (h.audio_format != 1 || h.num_channels != 3 ||
-      h.sample_rate != kSampleRate || h.bits_per_sample != 16) {
+      h.sample_rate != kDetectorSampleRate || h.bits_per_sample != 16) {
     std::fclose(file);
     *error = "wav must be PCM S16, 3 channels, 16 kHz";
     return false;
@@ -171,6 +171,29 @@ int runWavTest(const char *path) {
   return 0;
 }
 
+int convertHkMicToDetectorInput(const int16_t *input_2ch_48k,
+                                int input_frames,
+                                std::vector<int16_t> *output_3ch_16k) {
+  if (!input_2ch_48k || !output_3ch_16k || input_frames < 3) {
+    return 0;
+  }
+
+  const int output_frames = input_frames / 3;
+  output_3ch_16k->assign(output_frames * kDetectorChannels, 0);
+  for (int out = 0; out < output_frames; ++out) {
+    const int in = out * 3;
+    const int left = input_2ch_48k[in * kInputChannels + 0];
+    const int right = input_2ch_48k[in * kInputChannels + 1];
+    const int16_t mono = static_cast<int16_t>((left + right) / 2);
+
+    (*output_3ch_16k)[out * kDetectorChannels + 0] = mono;
+    (*output_3ch_16k)[out * kDetectorChannels + 1] = mono;
+    (*output_3ch_16k)[out * kDetectorChannels + 2] = mono;
+  }
+
+  return output_frames;
+}
+
 void printUsage(const char *prog) {
   std::fprintf(stderr, "Usage: %s [-r|--record <output.wav>] [--test-live] [--test-wav <input.wav>]\n", prog);
   std::fprintf(stderr, "  -r, --record   Record 3ch RAW output to a WAV file.\n");
@@ -219,32 +242,17 @@ int main(int argc, char **argv) {
 
   std::signal(SIGINT, sigintHandler);
 
-  std::vector<unsigned char> cache_buf(1024 * 64, 0);
-  RecvDataCacheInfo alsa_cache;
-  RecvDataCacheInit(&alsa_cache, cache_buf.data(), static_cast<unsigned int>(cache_buf.size()));
-
-  HWWakeup wakeup_handle = nullptr;
-  int ret = Duerwen_wakeup_init(&wakeup_handle, 0);
-  if (ret != 0) {
-    std::fprintf(stderr, "Duerwen_wakeup_init failed: %d\n", ret);
-    return 1;
-  }
-
   void *alsa_handle = nullptr;
-  ret = duerwen_alsa_init(&alsa_handle, const_cast<char *>(kPcmDevice),
-                          kChannels, kSampleRate, SND_PCM_STREAM_CAPTURE);
+  int ret = duerwen_alsa_init(&alsa_handle, const_cast<char *>(kPcmDevice),
+                              kInputChannels, kInputSampleRate,
+                              SND_PCM_STREAM_CAPTURE);
   if (ret != 0) {
     std::fprintf(stderr, "duerwen_alsa_init failed: %d\n", ret);
-    Duerwen_wakeup_unit(wakeup_handle);
     return 1;
   }
 
-  std::vector<int16_t> sources(kFrames * kChannels);
-  std::vector<int16_t> mic1(kFrames), mic2(kFrames), mic3(kFrames);
-  std::vector<int16_t> ref1(kFrames);
-  std::vector<int16_t> aec1(kFrames), aec2(kFrames), aec3(kFrames);
-  std::vector<int16_t> raw_interleaved(kFrames * 3);
-  std::vector<int16_t> naec(kFrames);
+  std::vector<int16_t> sources(kInputFrames * kInputChannels);
+  std::vector<int16_t> detector_interleaved;
 
   FILE *record_file = nullptr;
   if (record_path) {
@@ -252,10 +260,9 @@ int main(int argc, char **argv) {
     if (!record_file) {
       std::fprintf(stderr, "Cannot open record file: %s\n", record_path);
       duerwen_alsa_unit(alsa_handle);
-      Duerwen_wakeup_unit(wakeup_handle);
       return 1;
     }
-    writeWavHeader(record_file, 3, kSampleRate, 16);
+    writeWavHeader(record_file, kDetectorChannels, kDetectorSampleRate, 16);
     ROS_INFO("Recording 3ch RAW to %s", record_path);
   }
 
@@ -264,6 +271,7 @@ int main(int argc, char **argv) {
 
   if (test_live) {
     std::printf("Whistle live test started on microphone '%s'.\n", kPcmDevice);
+    std::printf("Input mode: HKMIC 2ch 48 kHz S16 -> 3ch 16 kHz detector stream.\n");
     std::printf("No ROS node/topic will be started in this mode.\n");
     std::printf("Calibrating noise floor for about 10 seconds...\n");
   } else {
@@ -276,32 +284,23 @@ int main(int argc, char **argv) {
     if (frames <= 0) {
       continue;
     }
-    if (frames != kFrames) {
+    if (frames > kInputFrames) {
+      frames = kInputFrames;
+    }
+
+    const int detector_frames =
+        convertHkMicToDetectorInput(sources.data(), frames, &detector_interleaved);
+    if (detector_frames <= 0) {
       continue;
     }
 
-    for (int i = 0; i < kFrames; ++i) {
-      mic1[i] = sources[i * kChannels + 0];
-      mic2[i] = sources[i * kChannels + 1];
-      mic3[i] = sources[i * kChannels + 2];
-      ref1[i] = sources[i * kChannels + 4];
-    }
-
-    ret = Duerwen_wakeup_three_write_data(
-        wakeup_handle, mic1.data(), mic2.data(), mic3.data(), ref1.data(),
-        aec1.data(), aec2.data(), aec3.data(), naec.data());
-
-    for (int i = 0; i < kFrames; ++i) {
-      raw_interleaved[i * 3 + 0] = aec1[i];
-      raw_interleaved[i * 3 + 1] = aec2[i];
-      raw_interleaved[i * 3 + 2] = aec3[i];
-    }
-
     if (record_file) {
-      std::fwrite(raw_interleaved.data(), sizeof(int16_t), static_cast<size_t>(kFrames * 3), record_file);
+      std::fwrite(detector_interleaved.data(), sizeof(int16_t),
+                  static_cast<size_t>(detector_frames * kDetectorChannels),
+                  record_file);
     }
 
-    bool ready = detector.processFrame(raw_interleaved.data(), kFrames);
+    bool ready = detector.processFrame(detector_interleaved.data(), detector_frames);
     if (ready && !was_ready) {
       if (test_live) {
         std::printf("Whistle detection ready (noise floor calibrated).\n");
@@ -338,7 +337,6 @@ int main(int argc, char **argv) {
     std::fclose(record_file);
   }
 
-  Duerwen_wakeup_unit(wakeup_handle);
   duerwen_alsa_unit(alsa_handle);
   return 0;
 }
