@@ -232,7 +232,7 @@ GameController::CanWhistleOverridePlaying(const TeamInfo* ourTeam) const
     return connected_ &&
            data_.state == STATE_SET &&
            data_.kickingTeam == teamNumber_ &&
-           data_.gamePhase == GAME_PHASE_NORMAL &&
+           (data_.gamePhase == GAME_PHASE_NORMAL || data_.gamePhase == GAME_PHASE_EXTRA_TIME) &&
            data_.setPlay == SET_PLAY_NONE &&
            !data_.stopped &&
            ourTeam->players[playerNumber_ - 1].penalty == PENALTY_NONE;
