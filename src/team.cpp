@@ -92,24 +92,24 @@ void Team::tick() {
   double target_interval = 0.5; // 默认低频：0.5秒一次 (2Hz)
   double monitor_send_interval = 1.0;
   if (info_.state == dmsgs::TeamInfo::BALL_HANDLING) {
-        // 状态1：持球机器人，最高频 (10Hz)
-        target_interval = 0.1; 
+        // 状态1：持球机器人，最高频 (20Hz)
+        target_interval = 0.05; 
     } 
   else if (info_.see_ball) {
         // 状态2：看到球的机器人，根据距离线性或阶梯调整
         double dist = std::sqrt(std::pow(info_.ball_field.x, 2) + std::pow(info_.ball_field.y, 2));
         
-        if (dist < 100.0) {      // 1米以内：高频 (8Hz)
-            target_interval = 0.125;
-        } else if (dist < 300.0) { // 3米以内：中频 (3Hz)
-            target_interval = 0.34;
-        } else {                 // 3米以外：低中频 (1.5Hz)
-            target_interval = 0.67;
+        if (dist < 100.0) {      // 1米以内：高频 (10Hz)
+            target_interval = 0.1;
+        } else if (dist < 300.0) { // 3米以内：中频 (5Hz)
+            target_interval = 0.5;
+        } else {                 // 3米以外：低中频 (2.5Hz)
+            target_interval = 0.4;
         }
     } 
   else {
-        // 状态3：看不到球且不持球，最低频 (0.67Hz)
-        target_interval = 1.5;
+        // 状态3：看不到球且不持球，最低频 (2Hz)
+        target_interval = 0.5;
     }
 
   bool has_online_teammate = false;
