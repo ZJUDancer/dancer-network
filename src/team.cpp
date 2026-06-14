@@ -90,7 +90,7 @@ void Team::tick() {
   }
     // --- 动态频率控制逻辑 ---
   double target_interval = 0.5; // 默认低频：0.5秒一次 (2Hz)
-  double monitor_send_interval = 1.0;
+  double monitor_send_interval = 0.1; // 10Hz monitor unicast
   if (info_.state == dmsgs::TeamInfo::BALL_HANDLING) {
         // 状态1：持球机器人，最高频 (20Hz)
         target_interval = 0.05; 
