@@ -212,11 +212,11 @@ GameController::tick()
     addr.sin_port = htons(GAMECONTROLLER_RETURN_PORT);
     inet_pton(AF_INET, gameControllerAddress_.c_str(), &addr.sin_addr);
 
-    printf("Sending %ld bytes to %s:%d\n", sizeof(ret_), inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-    for (int i = 0; i < sizeof(ret_); i++) {
-        printf("%02X ", ((uint8_t*)&ret_)[i]);
-    }
-    printf("\n");
+    // printf("Sending %ld bytes to %s:%d\n", sizeof(ret_), inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    // for (int i = 0; i < sizeof(ret_); i++) {
+    //     printf("%02X ", ((uint8_t*)&ret_)[i]);
+    // }
+    // printf("\n");
 
     sendto(sock, &ret_, sizeof(ret_), 0, (sockaddr*)&addr, sizeof(addr));
     close(sock);
