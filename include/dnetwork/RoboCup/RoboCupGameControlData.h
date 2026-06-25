@@ -7,7 +7,7 @@
 #define GAMECONTROLLER_RETURN_PORT 3939
 
 #define GAMECONTROLLER_STRUCT_HEADER  "RGme"
-#define GAMECONTROLLER_STRUCT_VERSION 19
+#define GAMECONTROLLER_STRUCT_VERSION 20
 
 #define MAX_NUM_PLAYERS 20
 
@@ -50,22 +50,22 @@
 #define PENALTY_NONE                          0
 #define PENALTY_ILLEGAL_POSITIONING           1
 #define PENALTY_MOTION_IN_SET                 2
-#define PENALTY_LOCAL_GAME_STUCK              3
-#define PENALTY_INCAPABLE_ROBOT               4
-#define PENALTY_PICK_UP                       5
-#define PENALTY_BALL_HOLDING                  6
-#define PENALTY_LEAVING_THE_FIELD             7
-#define PENALTY_PLAYING_WITH_ARMS_HANDS       8
-#define PENALTY_PUSHING                       9
-// TODO: Is this really everything?
-#define PENALTY_SENT_OFF                      10
-#define PENALTY_SUBSTITUTE                    11
+#define PENALTY_MOTION_IN_STOP                3
+#define PENALTY_LOCAL_GAME_STUCK              4
+#define PENALTY_INCAPABLE_ROBOT               5
+#define PENALTY_PICK_UP                       6
+#define PENALTY_BALL_HOLDING                  7
+#define PENALTY_LEAVING_THE_FIELD             8
+#define PENALTY_PLAYING_WITH_ARMS_HANDS       9
+#define PENALTY_PUSHING                       10
+#define PENALTY_CAUTIONED                     11
+#define PENALTY_SENT_OFF                      12
+#define PENALTY_SUBSTITUTE                    13
 
 struct RobotInfo
 {
   uint8_t penalty;             // penalty state of the player (PENALTY_NONE, etc)
   uint8_t secsTillUnpenalised; // estimate of time till unpenalised
-  uint8_t warnings;            // number of warnings
   uint8_t cautions;            // number of cautions (yellow cards)
 };
 

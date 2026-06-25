@@ -13,6 +13,8 @@
 
 #pragma once
 #include "dmsgs/GCInfo.h"
+#include "dmsgs/MotionInfo.h"
+#include "dmsgs/VisionInfo.h"
 #include "dnetwork/RoboCup/RoboCupGameControlData.h"
 #include <dprocess/dprocess.hpp>
 #include <dtransmit/dtransmit.hpp>
@@ -99,6 +101,16 @@ class GameController : public dprocess::DProcess<GameController>
      */
     void WhistleCallback(const std_msgs::String::ConstPtr& msg);
 
+    /**
+     * @brief Callback for motion status used by the GC return packet.
+     */
+    void MotionCallback(const dmsgs::MotionInfo::ConstPtr& msg);
+
+    /**
+     * @brief Callback for vision status used by the GC return packet.
+     */
+    void VisionCallback(const dmsgs::VisionInfo::ConstPtr& msg);
+
   private:
     //! Node handler
     ros::NodeHandle* nh_;
@@ -106,6 +118,10 @@ class GameController : public dprocess::DProcess<GameController>
     ros::Publisher pub_;
     //! Subscriber for whistle detection events
     ros::Subscriber whistle_sub_;
+    //! Subscriber for robot motion status
+    ros::Subscriber motion_sub_;
+    //! Subscriber for robot vision status
+    ros::Subscriber vision_sub_;
     //! GameControl messages
     dmsgs::GCInfo info_;
 
@@ -123,6 +139,8 @@ class GameController : public dprocess::DProcess<GameController>
     std::mutex dataLock_;
     //! Return data for GC Server
     RoboCupGameControlReturnData ret_;
+    //! Timestamp when this robot last saw the ball
+    ros::Time last_ball_seen_timestamp_;
 
     //! Flag for whether or not GC server is connected
     bool connected_;

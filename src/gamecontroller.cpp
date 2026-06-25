@@ -13,15 +13,20 @@
 
 #include "dnetwork/gamecontroller.hpp"
 
+#include <cmath>
+
 namespace dnetwork {
 
 using namespace std;
 static const int FREQ = 2;
+static const float CM_TO_MM = 10.f;
+static const float DEG_TO_RAD = 3.14159265358979323846f / 180.f;
 
 GameController::GameController(ros::NodeHandle* nh)
   : DProcess(FREQ, false)
   , nh_(nh)
   , last_valid_packet_timestamp_(0)
+  , last_ball_seen_timestamp_(0)
   , connected_(false)
   , penalised_(false)
   , teamCyan_(false)
@@ -48,6 +53,10 @@ GameController::GameController(ros::NodeHandle* nh)
 
     pub_ = nh_->advertise<dmsgs::GCInfo>("/dnetwork_" + std::to_string(playerNumber_) + "/GCInfo", 1);
     whistle_sub_ = nh_->subscribe("/whistle_detected", 1, &GameController::WhistleCallback, this);
+    motion_sub_ = nh_->subscribe("/dmotion_" + std::to_string(playerNumber_) + "/MotionInfo",
+                                 1, &GameController::MotionCallback, this);
+    vision_sub_ = nh_->subscribe("/dvision_" + std::to_string(playerNumber_) + "/VisionInfo",
+                                 1, &GameController::VisionCallback, this);
     // std::cout << "Hello1\n\n\n";
     transmitter_ = new dtransmit::DTransmit();
     transmitter_->addRawRecvFiltered(GAMECONTROLLER_DATA_PORT, gameControllerAddress_, [&](void* buffer, size_t size) {
@@ -88,7 +97,6 @@ GameController::tick()
     //         << (int)data_.secondaryStateInfo[2] << " "
     //         << (int)data_.secondaryStateInfo[3] << std::endl;
 
-    int gamePhase = data_.gamePhase;
     int setPlay = data_.setPlay;
     int kickingTeam = (int)data_.kickingTeam;
 
@@ -105,22 +113,22 @@ GameController::tick()
     bool enemyGoalKick = false;
     bool enemyThrowIn = false;
 
-    if (setPlay == SET_PLAY_DIRECT_FREE_KICK) {
+    if (kickingTeam != KICKING_TEAM_NONE && setPlay == SET_PLAY_DIRECT_FREE_KICK) {
         ourDirectFreeKick = (kickingTeam == teamNumber_);
         enemyDirectFreeKick = !ourDirectFreeKick;
-    } else if (setPlay == SET_PLAY_INDIRECT_FREE_KICK) {
+    } else if (kickingTeam != KICKING_TEAM_NONE && setPlay == SET_PLAY_INDIRECT_FREE_KICK) {
         ourIndirectFreeKick = (kickingTeam == teamNumber_);
         enemyIndirectFreeKick = !ourIndirectFreeKick;
-    } else if (setPlay == SET_PLAY_PENALTY_KICK) {
+    } else if (kickingTeam != KICKING_TEAM_NONE && setPlay == SET_PLAY_PENALTY_KICK) {
         ourPenaltyKick = (kickingTeam == teamNumber_);
         enemyPenaltyKick = !ourPenaltyKick;
-    } else if (setPlay == SET_PLAY_CORNER_KICK) {
+    } else if (kickingTeam != KICKING_TEAM_NONE && setPlay == SET_PLAY_CORNER_KICK) {
         ourCornerKick = (kickingTeam == teamNumber_);
         enemyCornerKick = !ourCornerKick;
-    } else if (setPlay == SET_PLAY_GOAL_KICK) {
+    } else if (kickingTeam != KICKING_TEAM_NONE && setPlay == SET_PLAY_GOAL_KICK) {
         ourGoalKick = (kickingTeam == teamNumber_);
         enemyGoalKick = !ourGoalKick;
-    } else if (setPlay == SET_PLAY_THROW_IN) {
+    } else if (kickingTeam != KICKING_TEAM_NONE && setPlay == SET_PLAY_THROW_IN) {
         ourThrowIn = (kickingTeam == teamNumber_);
         enemyThrowIn = !ourThrowIn;
     }
@@ -175,13 +183,17 @@ GameController::tick()
     info_.setPlay = data_.setPlay;
     info_.firstHalf = data_.firstHalf;
     info_.kickoff = kickoff;
-    info_.secsRemaining = (data_.secsRemaining >= 0 && data_.secsRemaining < 10000) ? (uint16_t)data_.secsRemaining : 0;
-    info_.secondaryTime = (data_.secondaryTime >= 0 && data_.secondaryTime < 10000) ? (uint16_t)data_.secondaryTime : 0;
+    info_.secsRemaining = data_.secsRemaining;
+    info_.secondaryTime = data_.secondaryTime;
     info_.secsTillUnpenalised = ourTeam->players[playerNumber_ - 1].secsTillUnpenalised;
     info_.ourScore = ourScore;
     info_.enemyScore = enemyScore;
     info_.teamCyan = teamCyan_;
     info_.penalised = penalised_;
+    info_.penalty = penalty;
+    info_.cautions = ourTeam->players[playerNumber_ - 1].cautions;
+    info_.sentOff = (penalty == PENALTY_SENT_OFF);
+    info_.substitute = (penalty == PENALTY_SUBSTITUTE);
 
     info_.ourPenaltyKick = ourPenaltyKick;
     info_.ourDirectFreeKick = ourDirectFreeKick;
@@ -259,6 +271,34 @@ GameController::WhistleCallback(const std_msgs::String::ConstPtr& msg)
         ROS_INFO("Whistle accepted: overriding our kickoff SET state to PLAYING");
     } else {
         ROS_INFO("Whistle ignored: not our kickoff SET state");
+    }
+}
+
+void
+GameController::MotionCallback(const dmsgs::MotionInfo::ConstPtr& msg)
+{
+    unique_lock<mutex> lock(dataLock_);
+    ret_.fallen = msg->stable ? 0 : 1;
+}
+
+void
+GameController::VisionCallback(const dmsgs::VisionInfo::ConstPtr& msg)
+{
+    unique_lock<mutex> lock(dataLock_);
+    ret_.pose[0] = static_cast<float>(msg->robot_pos.x) * CM_TO_MM;
+    ret_.pose[1] = static_cast<float>(msg->robot_pos.y) * CM_TO_MM;
+    ret_.pose[2] = static_cast<float>(msg->robot_pos.z) * DEG_TO_RAD;
+
+    if (msg->see_ball) {
+        last_ball_seen_timestamp_ = ros::Time::now();
+        ret_.ballAge = 0.f;
+        ret_.ball[0] = static_cast<float>(msg->ball_field.x) * CM_TO_MM;
+        ret_.ball[1] = static_cast<float>(msg->ball_field.y) * CM_TO_MM;
+    } else if (!last_ball_seen_timestamp_.isZero()) {
+        ret_.ballAge = static_cast<float>(
+            (ros::Time::now() - last_ball_seen_timestamp_).toSec());
+    } else {
+        ret_.ballAge = -1.f;
     }
 }
 
