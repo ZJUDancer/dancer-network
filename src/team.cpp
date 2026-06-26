@@ -195,8 +195,8 @@ void Team::BehaviorCallback(const dmsgs::BehaviorInfo::ConstPtr &msg) {
   info_.attack_target = behavior_info.attack_target;
 
   info_.team_ball_global = behavior_info.ball_global;
-  info_.ball_intercept_valid = behavior_info.ball_intercept_valid;
-  info_.ball_intercept_global = behavior_info.ball_intercept_global;
+  // info_.ball_intercept_valid = behavior_info.ball_intercept_valid;
+  // info_.ball_intercept_global = behavior_info.ball_intercept_global;
 
   // --- 新增：Voronoi 数据处理 (动态 -> 固定) ---
   
