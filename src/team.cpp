@@ -38,8 +38,7 @@ Team::Team(ros::NodeHandle *nh) : DProcess(NETWORK_FREQ, false), nh_(nh) {
         unicast_target_address_ = "192.168.1.100"; // 默认 fallback 地址
 
   // monitor 单播端口固定为 20000 + team_number，不再从配置读取
-  unicast_target_port_ =
-      dconstant::network::TeamInfoUnicastAddress(team_number_);
+  unicast_target_port_ = 20000 + team_number_;
 
   // ROS subscriber and publisher
   motion_sub_ = nh_->subscribe("/dmotion_" + std::to_string(player_number_) +
