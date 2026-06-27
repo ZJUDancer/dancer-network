@@ -37,9 +37,9 @@ Team::Team(ros::NodeHandle *nh) : DProcess(NETWORK_FREQ, false), nh_(nh) {
   if (!nh_->getParam("/ZJUDancer/UnicastTargetAddress", unicast_target_address_))
         unicast_target_address_ = "192.168.1.100"; // 默认 fallback 地址
 
-  // 获取单播目标端口 (假设为 10001)
-  if (!nh_->getParam("/ZJUDancer/UnicastTargetPort", unicast_target_port_))
-        unicast_target_port_ = 10001; 
+  // monitor 单播端口固定为 20000 + team_number，不再从配置读取
+  unicast_target_port_ =
+      dconstant::network::TeamInfoUnicastAddress(team_number_);
 
   // ROS subscriber and publisher
   motion_sub_ = nh_->subscribe("/dmotion_" + std::to_string(player_number_) +
