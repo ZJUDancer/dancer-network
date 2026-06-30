@@ -92,18 +92,18 @@ void Team::tick() {
   double monitor_send_interval = 0.1; // 10Hz monitor unicast
   if (info_.state == dmsgs::TeamInfo::BALL_HANDLING) {
         // 状态1：持球机器人，最高频 (20Hz)
-        target_interval = 0.05; 
+        target_interval = 0.1; 
     } 
   else if (info_.see_ball) {
         // 状态2：看到球的机器人，根据距离线性或阶梯调整
         double dist = std::sqrt(std::pow(info_.ball_field.x, 2) + std::pow(info_.ball_field.y, 2));
         
         if (dist < 100.0) {      // 1米以内：高频 (10Hz)
-            target_interval = 0.1;
+            target_interval = 0.2;
         } else if (dist < 300.0) { // 3米以内：中频 (5Hz)
-            target_interval = 0.5;
-        } else {                 // 3米以外：低中频 (2.5Hz)
             target_interval = 0.4;
+        } else {                 // 3米以外：低中频 (2.5Hz)
+            target_interval = 0.5;
         }
     } 
   else {
